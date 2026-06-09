@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อสอบกลางภาค คณะสัตวแพทยศาสตร์ มหาวิทยาลัยเบงจันทร์</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root {
+            --primary-color: #002147; /* สีกรมท่า มหาวิทยาลัยเบงจันทร์ */
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --border-color: #e0e0e0;
+        }
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .header h2 {
+            margin: 5px 0 0;
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: #d1d5db;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary-color);
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: 'Sarabun', sans-serif;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Sarabun', sans-serif;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #00152e;
+        }
+        .subject-container {
+            margin-top: 30px;
+            border-top: 3px solid var(--primary-color);
+            padding-top: 20px;
+        }
+        .subject-title {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .question-block {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9fafb;
+            border-radius: 6px;
+            border: 1px solid #f3f4f6;
+        }
+        .question-text {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .options label {
+            display: block;
+            font-weight: 400;
+            color: var(--text-color);
+            margin-bottom: 8px;
+            cursor: pointer;
+        }
+        .options input {
+            margin-right: 10px;
+        }
+        #resultArea {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+        }
+        .grade-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .grade-table th, .grade-table td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: left;
+        }
+        .grade-table th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .gpa-display {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.2rem; }
+            .container { padding: 15px; margin: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>ข้อสอบกลางภาค คณะสัตวแพทยศาสตร์</h1>
+        <h2>มหาวิทยาลัยเบงจันทร์ ปีการศึกษา 2569</h2>
+    </div>
+
+    <div class="container" id="loginArea">
+        <div class="form-group">
+            <label for="studentName">ชื่อ-นามสกุล นักศึกษาสัตวแพทย์</label>
+            <input type="text" id="studentName" placeholder="กรอกชื่อและนามสกุล" required>
+        </div>
+        <div class="form-group">
+            <label for="studyYear">เลือกชั้นปีที่กำลังศึกษา</label>
+            <select id="studyYear">
+                <option value="">-- กรุณาเลือกชั้นปี --</option>
+                <option value="year1">ปี 1 เทอม 1</option>
+                <option value="year2">ปี 2 เทอม 1</option>
+                <option value="year3">ปี 3 เทอม 1</option>
+                <option value="year4">ปี 4 ทั้งเทอม</option>
+                <option value="year5">ปี 5 ทั้งเทอม</option>
+                <option value="year6">ปี 6 (Externship)</option>
+            </select>
+        </div>
+        <button onclick="startExam()">เริ่มทำข้อสอบ</button>
+    </div>
+
+    <div class="container" id="examArea" style="display: none;">
+        <form id="examForm"></form>
+        <button type="button" onclick="submitExam()" style="margin-top: 20px; background-color: #28a745;">ส่งข้อสอบและประมวลผลเกรด</button>
+    </div>
+
+    <div class="container" id="resultArea">
+        <h2 style="text-align: center; color: var(--primary-color);">ใบรายงานผลการสอบ (Transcript)</h2>
+        <p><strong>ชื่อนักศึกษา: </strong><span id="resName"></span></p>
+        <p><strong>ชั้นปี: </strong><span id="resYear"></span></p>
+        <table class="grade-table">
+            <thead>
+                <tr>
+                    <th>รายวิชา</th>
+                    <th>คะแนน (เต็ม 10)</th>
+                    <th>เกรดที่ได้</th>
+                </tr>
+            </thead>
+            <tbody id="gradeBody"></tbody>
+        </table>
+        <div class="gpa-display">GPA: <span id="finalGPA"></span></div>
+    </div>
+
+<script>
+    // 1. ตั้งค่า Firebase (นำข้อมูลจากขั้นตอนที่ 1 มาใส่ตรงนี้)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "bengchan-med-exam.firebaseapp.com",
+        projectId: "bengchan-med-exam",
+        storageBucket: "bengchan-med-exam.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 2. ฐานข้อมูลข้อสอบ (ตัวอย่างสำหรับปี 1 สมบูรณ์ 100%)
+    const examData = {
+"year1": {
+            "ชีววิทยาทั่วไป": [
+                { q: "1. โครงสร้างใดที่พบในเซลล์พืชแต่ไม่พบในเซลล์สัตว์?", opts: ["เยื่อหุ้มเซลล์", "ผนังเซลล์และคลอโรพลาสต์", "ไมโทคอนเดรีย", "นิวเคลียส"], ans: 1 },
+                { q: "2. กระบวนการที่พืชสร้างอาหารโดยใช้แสงแดดเรียกว่าอะไร?", opts: ["Cellular respiration", "Photosynthesis", "Fermentation", "Transpiration"], ans: 1 },
+                { q: "3. ออร์แกเนลล์ใดทำหน้าที่เป็น 'โรงไฟฟ้า' ของเซลล์ในการสร้าง ATP?", opts: ["Ribosome", "Golgi body", "Mitochondria", "Lysosome"], ans: 2 },
+                { q: "4. การแบ่งเซลล์ร่างกายเพื่อการเจริญเติบโตเรียกว่าอะไร?", opts: ["Meiosis", "Mitosis", "Binary fission", "Budding"], ans: 1 },
+                { q: "5. สารพันธุกรรม (DNA) ของเซลล์ยูคาริโอตถูกเก็บไว้ที่ใด?", opts: ["Nucleus", "Cytoplasm", "Vacuole", "Endoplasmic reticulum"], ans: 0 },
+                { q: "6. เอนไซม์ในสิ่งมีชีวิตมีหน้าที่หลักคืออะไร?", opts: ["เพิ่มอุณหภูมิในเซลล์", "ลดพลังงานกระตุ้นของปฏิกิริยาเคมี", "ทำลายเซลล์ที่ตายแล้ว", "สร้างผนังเซลล์"], ans: 1 },
+                { q: "7. การออสโมซิส (Osmosis) คือการเคลื่อนที่ของสิ่งใด?", opts: ["น้ำผ่านเยื่อเลือกผ่าน", "ก๊าซออกซิเจน", "โปรตีน", "ไขมัน"], ans: 0 },
+                { q: "8. ยีน (Gene) คืออะไร?", opts: ["โปรตีนชนิดหนึ่ง", "ช่วงหนึ่งของ DNA ที่ควบคุมลักษณะทางพันธุกรรม", "คาร์โบไฮเดรต", "เซลล์สืบพันธุ์"], ans: 1 },
+                { q: "9. สัตว์ในกลุ่มใดที่มีกระดูกสันหลัง (Vertebrate)?", opts: ["แมลง", "หอย", "ปลาทู", "ดาวทะเล"], ans: 2 },
+                { q: "10. ข้อใดคือความสำคัญของความหลากหลายทางชีวภาพ?", opts: ["ทำให้เกิดมลพิษ", "รักษาสมดุลของระบบนิเวศ", "ลดจำนวนสิ่งมีชีวิต", "ไม่มีความสำคัญ"], ans: 1 }
+            ],
+            "เคมีทั่วไป": [
+                { q: "1. อนุภาคมูลฐานใดในอะตอมที่มีประจุลบ?", opts: ["โปรตอน", "นิวตรอน", "อิเล็กตรอน", "นิวเคลียส"], ans: 2 },
+                { q: "2. พันธะเคมีที่เกิดจากการใช้อิเล็กตรอนร่วมกันระหว่างอะตอมคือพันธะใด?", opts: ["พันธะไอออนิก", "พันธะโคเวเลนต์", "พันธะโลหะ", "พันธะไฮโดรเจน"], ans: 1 },
+                { q: "3. สารละลายที่มีค่า pH เท่ากับ 3 มีสมบัติเป็นอะไร?", opts: ["กรดแก่", "กรดอ่อน", "เบส", "กลาง"], ans: 0 },
+                { q: "4. กฎของบอยล์ (Boyle's Law) กล่าวถึงความสัมพันธ์ระหว่างสิ่งใด (เมื่ออุณหภูมิคงที่)?", opts: ["ความดันและปริมาตร", "ความดันและอุณหภูมิ", "ปริมาตรและอุณหภูมิ", "จำนวนโมลและปริมาตร"], ans: 0 },
+                { q: "5. สูตรเคมีของกรดไฮโดรคลอริกคือข้อใด?", opts: ["H2SO4", "HNO3", "HCl", "NaOH"], ans: 2 },
+                { q: "6. การเปลี่ยนสถานะจากของเหลวเป็นก๊าซเรียกว่าอะไร?", opts: ["การหลอมเหลว", "การแข็งตัว", "การระเหย", "การควบแน่น"], ans: 2 },
+                { q: "7. อะตอมที่มีจำนวนโปรตอนเท่ากันแต่มีจำนวนนิวตรอนต่างกันเรียกว่าอะไร?", opts: ["ไอโซเมอร์", "ไอโซโทป", "ไอออน", "โมเลกุล"], ans: 1 },
+                { q: "8. สารใดต่อไปนี้จัดเป็นสารประกอบ?", opts: ["O2", "H2", "H2O", "N2"], ans: 2 },
+                { q: "9. ค่าคงที่ของอาโวกาโดร (Avogadro's number) มีค่าประมาณเท่าใด?", opts: ["6.02 x 10^23", "3.14", "9.8", "3.0 x 10^8"], ans: 0 },
+                { q: "10. ปฏิกิริยาที่สารสูญเสียอิเล็กตรอนเรียกว่าปฏิกิริยาใด?", opts: ["Reduction", "Oxidation", "Hydrolysis", "Neutralization"], ans: 1 }
+            ],
+            "ฟิสิกส์สำหรับวิทยาศาสตร์ชีวภาพ": [
+                { q: "1. กฎข้อที่สองของนิวตันเขียนเป็นสมการได้อย่างไร?", opts: ["E = mc^2", "F = ma", "v = u + at", "P = F/A"], ans: 1 },
+                { q: "2. หน่วยของพลังงานในระบบ SI คือหน่วยใด?", opts: ["นิวตัน (N)", "วัตต์ (W)", "จูล (J)", "ปาสคาล (Pa)"], ans: 2 },
+                { q: "3. พลังงานศักย์โน้มถ่วงของวัตถุขึ้นอยู่กับปัจจัยใดเป็นหลัก?", opts: ["ความเร็ว", "มวลและความสูงจากระดับอ้างอิง", "อุณหภูมิ", "ปริมาตร"], ans: 1 },
+                { q: "4. คลื่นเสียงไม่สามารถเดินทางผ่านตัวกลางใดได้?", opts: ["ของแข็ง", "ของเหลว", "ก๊าซ", "สุญญากาศ"], ans: 3 },
+                { q: "5. หลักการของอาร์คิมีดีส (Archimedes' principle) ใช้อธิบายเรื่องใด?", opts: ["แรงลอยตัว", "ความดันในของเหลว", "การหักเหของแสง", "การนำความร้อน"], ans: 0 },
+                { q: "6. แสงเดินทางจากอากาศเข้าสู่น้ำจะเกิดปรากฏการณ์ใด?", opts: ["การสะท้อนกลับหมด", "การหักเห", "การเลี้ยวเบน", "การแทรกสอด"], ans: 1 },
+                { q: "7. กระแสไฟฟ้า (Electric current) คืออะไร?", opts: ["การไหลของประจุไฟฟ้า", "แรงดันไฟฟ้า", "ความต้านทานไฟฟ้า", "พลังงานไฟฟ้า"], ans: 0 },
+                { q: "8. เลนส์ชนิดใดใช้ในการแก้ไขปัญหาสายตาสั้น?", opts: ["เลนส์นูน", "เลนส์เว้า", "เลนส์ทรงกระบอก", "ปริซึม"], ans: 1 },
+                { q: "9. รังสีใดที่มีอำนาจทะลุทะลวงสูงสุด?", opts: ["รังสีแอลฟา", "รังสีบีตา", "รังสีแกมมา", "รังสีอินฟราเรด"], ans: 2 },
+                { q: "10. ความดัน (Pressure) คำนวณจากสูตรใด?", opts: ["แรงคูณระยะทาง", "มวลคูณความเร่ง", "แรงหารด้วยพื้นที่", "มวลหารด้วยปริมาตร"], ans: 2 }
+            ],
+            "คณิตศาสตร์เบื้องต้น (GE)": [
+                { q: "1. ผลลัพธ์ของ 15 + 5 × 2 คือข้อใด?", opts: ["40", "25", "30", "20"], ans: 1 },
+                { q: "2. ถ้า 4x - 5 = 11 ค่าของ x คือเท่าใด?", opts: ["3", "4", "5", "6"], ans: 1 },
+                { q: "3. ร้อยละ 20 ของ 500 เท่ากับเท่าใด?", opts: ["50", "100", "150", "200"], ans: 1 },
+                { q: "4. พื้นที่ของรูปสามเหลี่ยมคำนวณจากสูตรใด?", opts: ["กว้าง × ยาว", "ด้าน × ด้าน", "1/2 × ฐาน × สูง", "πr^2"], ans: 2 },
+                { q: "5. ค่าเฉลี่ยเลขคณิตของข้อมูลชุด 2, 4, 6, 8, 10 คือเท่าใด?", opts: ["4", "5", "6", "8"], ans: 2 },
+                { q: "6. ทฤษฎีบทพีทาโกรัส c^2 = a^2 + b^2 ใช้กับรูปเรขาคณิตใด?", opts: ["รูปสี่เหลี่ยมมุมฉาก", "รูปสามเหลี่ยมมุมฉาก", "รูปวงกลม", "รูปหลายเหลี่ยม"], ans: 1 },
+                { q: "7. ความน่าจะเป็นของการทอยลูกเต๋า 1 ลูกแล้วได้แต้มคู่คือเท่าใด?", opts: ["1/6", "1/3", "1/2", "2/3"], ans: 2 },
+                { q: "8. ค่า x ที่สอดคล้องกับอสมการ 2x > 10 คือ?", opts: ["x < 5", "x > 5", "x = 5", "x <= 5"], ans: 1 },
+                { q: "9. ลอการิทึม log10(100) มีค่าเท่ากับเท่าใด?", opts: ["1", "2", "10", "100"], ans: 1 },
+                { q: "10. มุมภายในของรูปสามเหลี่ยมรวมกันได้กี่องศา?", opts: ["90 องศา", "180 องศา", "270 องศา", "360 องศา"], ans: 1 }
+            ],
+            "ภาษาอังกฤษพื้นฐาน 1 (GE)": [
+                { q: "1. Choose the correct form: 'The dog ___ barking loudly.'", opts: ["am", "is", "are", "be"], ans: 1 },
+                { q: "2. What is the plural form of 'calf'?", opts: ["calfs", "calves", "calfes", "calvies"], ans: 1 },
+                { q: "3. Synonym for the word 'sick' is:", opts: ["healthy", "strong", "ill", "fast"], ans: 2 },
+                { q: "4. Identify the verb in this sentence: 'The vet examines the cat.'", opts: ["The", "vet", "examines", "cat"], ans: 2 },
+                { q: "5. 'A person who treats sick animals' is called a:", opts: ["Doctor", "Dentist", "Veterinarian", "Nurse"], ans: 2 },
+                { q: "6. Choose the correct preposition: 'The clinic opens ___ 8:00 AM.'", opts: ["in", "on", "at", "with"], ans: 2 },
+                { q: "7. What does the abbreviation 'DVM' stand for?", opts: ["Doctor of Veterinary Medicine", "Dental Veterinary Master", "Doctor of Viral Medicine", "Degree of Veterinary Medicine"], ans: 0 },
+                { q: "8. Change to past tense: 'He feeds the horses.'", opts: ["He feeded the horses.", "He fed the horses.", "He is feeding the horses.", "He will feed the horses."], ans: 1 },
+                { q: "9. Which word means 'an animal kept for companionship'?", opts: ["Livestock", "Pest", "Pet", "Wild animal"], ans: 2 },
+                { q: "10. 'The bird flew ___ the tree.' Choose the best preposition.", opts: ["over", "under", "inside", "between"], ans: 0 }
+            ],
+            "จรรยาบรรณและสวัสดิภาพสัตว์เบื้องต้น": [
+                { q: "1. หลัก 5 Freedoms (สิทธิ 5 ประการของสัตว์) ไม่รวม ข้อใด?", opts: ["อิสระจากความหิวกระหาย", "อิสระจากการแสดงพฤติกรรมตามธรรมชาติ", "อิสระจากการทำงานหนักเกินไป", "อิสระจากความเจ็บปวดและโรคภัย"], ans: 2 },
+                { q: "2. สวัสดิภาพสัตว์ (Animal Welfare) หมายถึงอะไร?", opts: ["การให้สัตว์กินอาหารแพงๆ", "การดูแลให้สัตว์มีคุณภาพชีวิตที่ดีทั้งกายและใจ", "การปล่อยสัตว์คืนสู่ป่าทุกตัว", "การไม่นำสัตว์มาใช้ประโยชน์เลย"], ans: 1 },
+                { q: "3. สัตวแพทย์มีจรรยาบรรณหลักต่อผู้ใดเป็นอันดับแรกในกระบวนการรักษา?", opts: ["เจ้าของสัตว์", "ตัวสัตว์ที่ป่วย", "โรงพยาบาล", "บริษัทยา"], ans: 1 },
+                { q: "4. การทำ Euthanasia (การการุณยฆาต) ในสัตว์ควรทำเมื่อใด?", opts: ["เมื่อเจ้าของไม่มีเงินจ่ายค่ารักษา", "เมื่อสัตว์มีอาการเจ็บป่วยทรมานและไม่สามารถรักษาให้หายได้", "เมื่อสัตว์ดุร้าย", "เมื่อคลินิกไม่มีกรงขัง"], ans: 1 },
+                { q: "5. พ.ร.บ. ป้องกันการทารุณกรรมและการจัดสวัสดิภาพสัตว์ มีวัตถุประสงค์เพื่ออะไร?", opts: ["เพิ่มรายได้ให้รัฐ", "คุ้มครองสัตว์มิให้ถูกทารุณกรรม", "ส่งเสริมการส่งออกสัตว์", "จำกัดจำนวนผู้เลี้ยงสัตว์"], ans: 1 },
+                { q: "6. ข้อใดถือเป็นการกระทำที่ผิดจรรยาบรรณสัตวแพทย์?", opts: ["การอธิบายความเสี่ยงให้เจ้าของฟัง", "การรักษาตามหลักวิชาการ", "การเปิดเผยข้อมูลความลับของลูกค้าโดยไม่ได้รับอนุญาต", "การปฏิเสธการรักษาในกรณีที่เกินขีดความสามารถ"], ans: 2 },
+                { q: "7. สัตว์ทดลองควรได้รับการปฏิบัติตามหลัก 3Rs ซึ่ง R ตัวหนึ่งหมายถึงอะไร?", opts: ["Reuse (ใช้ซ้ำ)", "Reduce (ลดจำนวนที่ใช้)", "Recycle (นำกลับมาใช้ใหม่)", "Run (ปล่อยวิ่ง)"], ans: 1 },
+                { q: "8. การดูแลสวัสดิภาพสัตว์ในฟาร์มปศุสัตว์ส่งผลดีอย่างไร?", opts: ["ทำให้สัตว์ดุร้ายขึ้น", "ลดคุณภาพเนื้อสัตว์", "เพิ่มภูมิคุ้มกันและลดความเครียดในสัตว์", "ทำให้ต้นทุนลดลงจนเป็นศูนย์"], ans: 2 },
+                { q: "9. ในการสื่อสารกับเจ้าของสัตว์ สัตวแพทย์ควรหลีกเลี่ยงสิ่งใด?", opts: ["การใช้ศัพท์เทคนิคที่เข้าใจยากโดยไม่อธิบาย", "การบอกความจริงเกี่ยวกับโรค", "การประเมินค่าใช้จ่ายล่วงหน้า", "การให้ทางเลือกในการรักษา"], ans: 0 },
+                { q: "10. หากพบเห็นการทารุณกรรมสัตว์ สัตวแพทย์ควรมีบทบาทอย่างไร?", opts: ["เพิกเฉย", "แจ้งหน่วยงานที่เกี่ยวข้องเพื่อช่วยเหลือ", "ถ่ายรูปลงโซเชียลมีเดียอย่างเดียว", "ไปทำร้ายผู้กระทำผิด"], ans: 1 }
+            ]
+        },
+	"year2": {
+            "มหกายวิภาคศาสตร์ทางสัตวแพทย์ 1": [
+                { q: "1. กระดูกสันหลังส่วนอก (Thoracic vertebrae) ของสุนัขมีจำนวนกี่ชิ้น?", opts: ["7 ชิ้น", "13 ชิ้น", "18 ชิ้น", "20 ชิ้น"], ans: 1 },
+                { q: "2. กล้ามเนื้อใดทำหน้าที่หลักในการเหยียดข้อศอก (Extend elbow joint)?", opts: ["Biceps brachii", "Brachialis", "Triceps brachii", "Deltoideus"], ans: 2 },
+                { q: "3. โครงสร้างใดที่เป็นทางผ่านของไขสันหลังออกจากกะโหลกศีรษะ?", opts: ["Foramen magnum", "Jugular foramen", "Optic canal", "Infraorbital foramen"], ans: 0 },
+                { q: "4. เอ็นที่ยึดระหว่างกระดูกต้นขา (Femur) กับกระดูกหน้าแข้ง (Tibia) เพื่อป้องกันการเลื่อนไปด้านหน้าคือเอ็นใด?", opts: ["Patellar ligament", "Cranial cruciate ligament", "Caudal cruciate ligament", "Collateral ligament"], ans: 1 },
+                { q: "5. กระดูกชิ้นใดไม่ได้เป็นส่วนประกอบของกระดูกเชิงกราน (Pelvic bone)?", opts: ["Ilium", "Ischium", "Pubis", "Sacrum"], ans: 3 },
+                { q: "6. กล้ามเนื้อกลุ่ม Mastication (บดเคี้ยว) อาศัยการควบคุมจากเส้นประสาทสมองคู่ใด?", opts: ["Facial nerve (VII)", "Trigeminal nerve (V)", "Vagus nerve (X)", "Hypoglossal nerve (XII)"], ans: 1 },
+                { q: "7. สุนัขมีนิ้วเท้าที่ขาหน้า (Forelimb) จำนวนกี่นิ้ว?", opts: ["3 นิ้ว", "4 นิ้ว", "5 นิ้ว", "6 นิ้ว"], ans: 2 },
+                { q: "8. หลอดเลือดดำหลักที่ใช้ในการเจาะเลือดบริเวณคอของสุนัขและแมวคือ?", opts: ["Cephalic vein", "Jugular vein", "Saphenous vein", "Femoral vein"], ans: 1 },
+                { q: "9. กระดูกระยางค์ขาหน้าชิ้นใดที่มีกระบวนการ Olecranon process?", opts: ["Humerus", "Radius", "Ulna", "Scapula"], ans: 2 },
+                { q: "10. Nuchal ligament ในสุนัข ทอดขนานจากบริเวณใดถึงบริเวณใด?", opts: ["กะโหลกศีรษะ ถึง กระดูกคอ", "กระดูกคอซี่ที่ 2 (Axis) ถึง กระดูกสันหลังส่วนอกซี่แรกๆ", "กระดูกเอว ถึง กระดูกหาง", "กะโหลกศีรษะ ถึง กระดูกก้นกบ"], ans: 1 }
+            ],
+            "จุลกายวิภาคศาสตร์": [
+                { q: "1. เนื้อเยื่อบุผิว (Epithelium) ที่พบบริเวณหลอดลม (Trachea) มีลักษณะแบบใด?", opts: ["Simple squamous", "Simple cuboidal", "Stratified squamous", "Pseudostratified ciliated columnar"], ans: 3 },
+                { q: "2. เซลล์ชนิดใดทำหน้าที่สร้างเส้นใยคอลลาเจนในเนื้อเยื่อเกี่ยวพัน?", opts: ["Fibroblast", "Macrophage", "Mast cell", "Adipocyte"], ans: 0 },
+                { q: "3. ลักษณะเด่นของเซลล์กล้ามเนื้อหัวใจ (Cardiac muscle) เมื่อดูผ่านกล้องจุลทรรศน์คืออะไร?", opts: ["ไม่มีลาย", "มีหลายนิวเคลียสอยู่ที่ขอบเซลล์", "มี Intercalated discs", "รูปร่างกระสวย"], ans: 2 },
+                { q: "4. กระดูกอ่อนบริเวณใบหู (Ear pinna) เป็นกระดูกอ่อนชนิดใด?", opts: ["Hyaline cartilage", "Elastic cartilage", "Fibrocartilage", "Calcified cartilage"], ans: 1 },
+                { q: "5. เซลล์ชนิดใดทำหน้าที่สลายเนื้อกระดูก (Bone resorption)?", opts: ["Osteoblast", "Osteocyte", "Osteoclast", "Chondrocyte"], ans: 2 },
+                { q: "6. เนื้อเยื่อบุผิวชนิด Transitional epithelium พบได้ที่อวัยวะใด?", opts: ["กระเพาะอาหาร", "ถุงน้ำดี", "กระเพาะปัสสาวะ", "ปอด"], ans: 2 },
+                { q: "7. เม็ดเลือดขาวชนิดใดมีบทบาทสำคัญในการทำลายพยาธิและปรสิต?", opts: ["Neutrophil", "Eosinophil", "Basophil", "Lymphocyte"], ans: 1 },
+                { q: "8. โครงสร้างใดของเซลล์ประสาททำหน้าที่รับสัญญาณเข้าสู่ตัวเซลล์?", opts: ["Axon", "Dendrite", "Myelin sheath", "Synapse"], ans: 1 },
+                { q: "9. Macrophage ที่พบในตับมีชื่อเฉพาะเรียกว่าอะไร?", opts: ["Microglia", "Osteoclast", "Kupffer cell", "Langerhans cell"], ans: 2 },
+                { q: "10. ต่อมไร้ท่อ (Endocrine gland) มีลักษณะสำคัญคืออะไร?", opts: ["มีท่อลำเลียงสารคัดหลั่ง", "หลั่งสารออกสู่ภายนอกร่างกาย", "หลั่งฮอร์โมนเข้าสู่กระแสเลือดโดยตรง", "หลั่งเอนไซม์ย่อยอาหาร"], ans: 2 }
+            ],
+            "สรีรวิทยาทางสัตวแพทย์ 1": [
+                { q: "1. Resting membrane potential ของเซลล์ประสาทถูกควบคุมโดยการเคลื่อนที่ของไอออนใดเป็นหลัก?", opts: ["Sodium (Na+) เข้าเซลล์", "Potassium (K+) ออกจากเซลล์", "Calcium (Ca2+) เข้าเซลล์", "Chloride (Cl-) ออกจากเซลล์"], ans: 1 },
+                { q: "2. สารสื่อประสาท (Neurotransmitter) ชนิดใดที่ทำงานที่จุดต่อระหว่างเซลล์ประสาทกับกล้ามเนื้อลาย (Neuromuscular junction)?", opts: ["Dopamine", "Serotonin", "Acetylcholine", "GABA"], ans: 2 },
+                { q: "3. ในกระบวนการหดตัวของกล้ามเนื้อลาย แคลเซียม (Ca2+) จะไปจับกับโปรตีนชนิดใด?", opts: ["Myosin", "Actin", "Troponin", "Tropomyosin"], ans: 2 },
+                { q: "4. เครื่องกระตุ้นจังหวะหัวใจตามธรรมชาติ (Primary pacemaker) ของสัตว์เลี้ยงลูกด้วยนมคือ?", opts: ["AV node", "SA node", "Bundle of His", "Purkinje fibers"], ans: 1 },
+                { q: "5. ความแตกต่างระหว่าง Plasma และ Serum คืออะไร?", opts: ["Plasma ไม่มีโปรตีน", "Serum ไม่มีเม็ดเลือดแดง", "Serum ไม่มีปัจจัยการแข็งตัวของเลือด (เช่น Fibrinogen)", "Plasma มีสีแดงกว่า"], ans: 2 },
+                { q: "6. เสียงหัวใจตุ้บแรก (Lub) เกิดจากเหตุการณ์ใด?", opts: ["การปิดของ Semilunar valves", "การเปิดของ AV valves", "การปิดของ AV valves", "การบีบตัวของหัวใจห้องบน"], ans: 2 },
+                { q: "7. ช่วง Depolarization ของ Action potential เกิดจากการเปิดของช่องไอออนใด?", opts: ["Voltage-gated Na+ channels", "Voltage-gated K+ channels", "Ligand-gated Cl- channels", "Leakage channels"], ans: 0 },
+                { q: "8. การทำงานของระบบประสาทซิมพาเทติก (Sympathetic) มีผลต่อหัวใจอย่างไร?", opts: ["ลดอัตราการเต้นของหัวใจ", "เพิ่มอัตราและแรงบีบตัวของหัวใจ", "ไม่มีผลต่อหัวใจ", "ทำให้หลอดเลือดหัวใจตีบแคบทั้งหมด"], ans: 1 },
+                { q: "9. เซลล์เม็ดเลือดชนิดใดที่มีบทบาทสำคัญที่สุดในกระบวนการห้ามเลือด (Hemostasis)?", opts: ["Erythrocyte (RBC)", "Neutrophil", "Lymphocyte", "Thrombocyte (Platelet)"], ans: 3 },
+                { q: "10. ข้อใดเป็นลักษณะการทำงานของกล้ามเนื้อเรียบ (Smooth muscle)?", opts: ["ทำงานภายใต้อำนาจจิตใจ", "มีการหดตัวที่เร็วและรุนแรงมาก", "ไม่มีลายและทำงานนอกอำนาจจิตใจ", "พบได้ทั่วไปที่กระดูกรยางค์"], ans: 2 }
+            ],
+            "ชีวเคมีทางสัตวแพทย์": [
+                { q: "1. แหล่งพลังงานหลักในสัตว์เคี้ยวเอื้อง (Ruminants) ที่ได้จากการหมักอาหารโดยจุลินทรีย์คือสารใด?", opts: ["Glucose", "Volatile Fatty Acids (VFAs)", "Amino acids", "Triglycerides"], ans: 1 },
+                { q: "2. โปรตีนประกอบด้วยหน่วยย่อยพื้นฐานที่เรียกว่าอะไร?", opts: ["Monosaccharides", "Nucleotides", "Fatty acids", "Amino acids"], ans: 3 },
+                { q: "3. กระบวนการ Glycolysis แบบใช้ออกซิเจน (Aerobic) จะได้ผลผลิตสุดท้ายเป็นสารใดก่อนเข้าสู่ไมโทคอนเดรีย?", opts: ["Lactic acid", "Pyruvate", "Ethanol", "Acetyl-CoA"], ans: 1 },
+                { q: "4. คาร์โบไฮเดรตถูกเก็บสะสมในร่างกายสัตว์ในรูปแบบใด?", opts: ["Starch", "Cellulose", "Glycogen", "Glucagon"], ans: 2 },
+                { q: "5. พันธะที่เชื่อมระหว่างกรดอะมิโนในสายโพลีเปปไทด์เรียกว่าอะไร?", opts: ["Hydrogen bond", "Glycosidic bond", "Peptide bond", "Phosphodiester bond"], ans: 2 },
+                { q: "6. กระบวนการสลายกรดไขมัน (Fatty acid oxidation) เกิดขึ้นที่บริเวณใดของเซลล์?", opts: ["Cytosol", "Nucleus", "Mitochondria", "Golgi apparatus"], ans: 2 },
+                { q: "7. เอนไซม์มีคุณสมบัติทางชีวเคมีตรงกับข้อใด?", opts: ["เป็นไขมันที่ให้พลังงาน", "เป็นโปรตีนที่ทำหน้าที่เป็นตัวเร่งปฏิกิริยาทางชีวภาพ", "เป็นสารพันธุกรรม", "เป็นฮอร์โมนทุกชนิด"], ans: 1 },
+                { q: "8. วัฏจักรยูเรีย (Urea cycle) เพื่อกำจัดแอมโมเนียที่เป็นพิษ เกิดขึ้นหลักที่อวัยวะใด?", opts: ["ไต", "ปอด", "ตับ", "ม้าม"], ans: 2 },
+                { q: "9. วิตามินใดที่ละลายในไขมันและมีความสำคัญต่อกระบวนการแข็งตัวของเลือด?", opts: ["Vitamin C", "Vitamin B12", "Vitamin A", "Vitamin K"], ans: 3 },
+                { q: "10. การเสียสภาพ (Denaturation) ของโปรตีนจะไม่ทำลายโครงสร้างระดับใด?", opts: ["Primary structure (ลำดับกรดอะมิโน)", "Secondary structure", "Tertiary structure", "Quaternary structure"], ans: 0 }
+            ],
+            "ภาษาอังกฤษเพื่อวิชาชีพ (GE)": [
+                { q: "1. คำศัพท์ใดแปลว่า 'โรคพิษสุนัขบ้า'?", opts: ["Canine Distemper", "Rabies", "Parvovirus", "Leptospirosis"], ans: 1 },
+                { q: "2. คำสั่งการใช้ยา 'BID' บนใบสั่งยาหมายความว่าอย่างไร?", opts: ["วันละ 1 ครั้ง", "วันละ 2 ครั้ง", "วันละ 3 ครั้ง", "ก่อนนอน"], ans: 1 },
+                { q: "3. 'Prognosis' ในทางการแพทย์มีความหมายว่าอะไร?", opts: ["การวินิจฉัยโรค", "การพยากรณ์โรค (คาดการณ์ผลการรักษา)", "การผ่าตัด", "ประวัติสัตว์ป่วย"], ans: 1 },
+                { q: "4. คำศัพท์ภาษาอังกฤษที่ใช้เรียก 'สุนัขเพศเมีย' ในทางสัตวแพทย์คือคำใด?", opts: ["Dog", "Sire", "Bitch", "Queen"], ans: 2 },
+                { q: "5. ประโยค 'The cat has a poor appetite' หมายความว่าอย่างไร?", opts: ["แมวอ้วนเกินไป", "แมวมีอาการเบื่ออาหาร", "แมวมีนิสัยดุร้าย", "แมวกินอาหารเก่งมาก"], ans: 1 },
+                { q: "6. คำศัพท์ทางการแพทย์ 'Gastroenteritis' หมายถึงภาวะใด?", opts: ["ตับอักเสบ", "ปอดอักเสบ", "กระเพาะอาหารและลำไส้อักเสบ", "ไตวาย"], ans: 2 },
+                { q: "7. Fill in the blank: 'The puppy needs to be ___ against common diseases.'", opts: ["vaccinated", "surgery", "grooming", "euthanized"], ans: 0 },
+                { q: "8. Zoonosis (Zoonotic disease) หมายถึงอะไร?", opts: ["โรคที่ติดต่อในสัตว์ป่าเท่านั้น", "โรคที่เกิดจากความผิดปกติทางพันธุกรรม", "โรคที่สามารถติดต่อจากสัตว์สู่คนได้", "โรคที่เกิดจากสัตว์เลี้ยงกินอาหารผิดประเภท"], ans: 2 },
+                { q: "9. อุปกรณ์ 'Stethoscope' ใช้สำหรับทำอะไร?", opts: ["ส่องหูสัตว์ป่วย", "วัดอุณหภูมิร่างกาย", "ฟังเสียงหัวใจและปอด", "อัลตราซาวด์ช่องท้อง"], ans: 2 },
+                { q: "10. หากเจ้าของสัตว์กังวลเกี่ยวกับการผ่าตัด คุณควรพูดปลอบใจด้วยประโยคใด?", opts: ["It will probably fail.", "Don't worry, your pet is in good hands.", "We are just guessing.", "Dogs don't feel pain."], ans: 1 }
+            ]
+        },
+	"year3": {
+            "พยาธิวิทยาทางสัตวแพทย์": [
+                { q: "1. การตายของเซลล์แบบมีการตั้งโปรแกรมไว้ล่วงหน้า (Programmed cell death) โดยไม่ก่อให้เกิดการอักเสบเรียกว่าอะไร?", opts: ["Necrosis", "Apoptosis", "Autolysis", "Putrefaction"], ans: 1 },
+                { q: "2. รอยโรค 'Nutmeg liver' หรือตับลายลูกจันทน์ มักเกิดจากสภาวะใด?", opts: ["ตับอักเสบเฉียบพลัน", "เลือดคั่งในตับเรื้อรังจากภาวะหัวใจซีกขวาล้มเหลว", "ไขมันพอกตับ", "มะเร็งตับ"], ans: 1 },
+                { q: "3. เซลล์อักเสบชนิดใดที่พบเป็นหลักในระยะแรกของการอักเสบแบบเฉียบพลัน (Acute inflammation)?", opts: ["Macrophage", "Lymphocyte", "Neutrophil", "Plasma cell"], ans: 2 },
+                { q: "4. ภาวะบวมน้ำ (Edema) จากการขาดโปรตีนในเลือด (Hypoproteinemia) เกิดจากกลไกใดเป็นหลัก?", opts: ["Capillary hydrostatic pressure เพิ่มขึ้น", "Plasma oncotic pressure ลดลง", "Vascular permeability เพิ่มขึ้น", "Lymphatic obstruction"], ans: 1 },
+                { q: "5. การสะสมของเม็ดสี Hemosiderin ในเซลล์ Macrophage บริเวณปอด (Heart failure cells) เกิดจากการแตกของเซลล์ชนิดใด?", opts: ["White blood cell", "Red blood cell", "Hepatocyte", "Pneumocyte"], ans: 1 },
+                { q: "6. ลิ่มเลือดที่หลุดลอยไปตามกระแสเลือดและไปอุดตันที่หลอดเลือดอื่นเรียกว่าอะไร?", opts: ["Thrombus", "Embolus", "Infarct", "Ischemia"], ans: 1 },
+                { q: "7. การปรับตัวของเซลล์โดยการเพิ่ม 'ขนาด' ของเซลล์ (เซลล์ใหญ่ขึ้นแต่จำนวนเท่าเดิม) เรียกว่าอะไร?", opts: ["Hyperplasia", "Hypertrophy", "Atrophy", "Metaplasia"], ans: 1 },
+                { q: "8. จุดเลือดออกขนาดเล็กประมาณ 1-2 มิลลิเมตร ที่พบบนเยื่อบุหรือผิวหนังเรียกว่าอะไร?", opts: ["Petechiae", "Ecchymosis", "Purpura", "Hematoma"], ans: 0 },
+                { q: "9. เนื้องอกร้าย (Malignant tumor) ที่มีจุดกำเนิดมาจากเนื้อเยื่อเกี่ยวพัน (Mesenchymal origin) จะมีคำลงท้ายชื่อว่าอะไร?", opts: ["-oma", "-carcinoma", "-sarcoma", "-plasia"], ans: 2 },
+                { q: "10. ลักษณะการตายของเนื้อเยื่อแบบ Caseous necrosis มักพบได้บ่อยในการติดเชื้อชนิดใด?", opts: ["ไวรัสพิษสุนัขบ้า", "แบคทีเรียวัณโรค (Tuberculosis)", "พยาธิหนอนหัวใจ", "เชื้อราผิวหนัง"], ans: 1 }
+            ],
+            "วิทยาแบคทีเรียและเชื้อราทางสัตวแพทย์": [
+                { q: "1. แบคทีเรียแกรมบวก (Gram-positive) จะติดสีอะไรเมื่อย้อมด้วยวิธี Gram stain?", opts: ["สีแดง/ชมพู", "สีม่วง/น้ำเงิน", "สีเขียว", "สีเหลือง"], ans: 1 },
+                { q: "2. เชื้อแบคทีเรียใดเป็นสาเหตุหลักที่ทำให้เกิดโรคผิวหนังอักเสบเป็นหนอง (Pyoderma) ในสุนัข?", opts: ["Escherichia coli", "Streptococcus equi", "Staphylococcus pseudintermedius", "Pseudomonas aeruginosa"], ans: 2 },
+                { q: "3. เชื้อแบคทีเรียก่อโรคแอนแทรกซ์ (Anthrax) มีลักษณะสำคัญประการใดที่ทำให้ทนทานต่อสภาพแวดล้อม?", opts: ["สร้าง Capsule", "สร้าง Spore (Endospore)", "มี Flagella จำนวนมาก", "สร้าง Biofilm"], ans: 1 },
+                { q: "4. แบคทีเรียกลุ่มใดที่ 'ไม่มี' ผนังเซลล์ (Cell wall) ทำให้ไม่ตอบสนองต่อยาปฏิชีวนะกลุ่ม Penicillin?", opts: ["Mycoplasma", "Mycobacterium", "Pasteurella", "Clostridium"], ans: 0 },
+                { q: "5. เชื้อโรคใดเป็นสาเหตุของโรค Strangles (ต่อมน้ำเหลืองใต้คางอักเสบเป็นหนอง) ในม้า?", opts: ["Burkholderia mallei", "Streptococcus equi", "Rhodococcus equi", "Bacillus anthracis"], ans: 1 },
+                { q: "6. อาหารเลี้ยงเชื้อชนิดใดที่นิยมใช้ในการเพาะเลี้ยงเชื้อรา?", opts: ["MacConkey Agar", "Blood Agar", "Sabouraud Dextrose Agar (SDA)", "Nutrient Agar"], ans: 2 },
+                { q: "7. เชื้อรา Dermatophyte ชนิดใดที่พบเป็นสาเหตุของโรคขี้กลาก (Ringworm) ในสุนัขและแมวมากที่สุด?", opts: ["Microsporum canis", "Malassezia pachydermatis", "Aspergillus fumigatus", "Candida albicans"], ans: 0 },
+                { q: "8. ยีสต์ชนิดใดที่มักพบเป็นสาเหตุของหูชั้นนอกอักเสบ (Otitis externa) ในสุนัข?", opts: ["Cryptococcus neoformans", "Malassezia pachydermatis", "Histoplasma capsulatum", "Trichophyton mentagrophytes"], ans: 1 },
+                { q: "9. เชื้อแบคทีเรียรูปกระสวยที่เป็นสาเหตุของโรคบาดทะยัก (Tetanus) คือเชื้อใด?", opts: ["Clostridium botulinum", "Clostridium tetani", "Clostridium perfringens", "Clostridium chauvoei"], ans: 1 },
+                { q: "10. เชื้อแบคทีเรีย Zoonosis ชนิดใดที่เป็นสาเหตุของการแท้งในโคและสามารถติดต่อสู่คนผ่านการดื่มนมดิบได้?", opts: ["Leptospira interrogans", "Salmonella typhimurium", "Brucella abortus", "Campylobacter fetus"], ans: 2 }
+            ],
+            "วิทยาภูมิคุ้มกัน": [
+                { q: "1. อวัยวะน้ำเหลืองปฐมภูมิ (Primary lymphoid organs) ในสัตว์เลี้ยงลูกด้วยนมคือข้อใด?", opts: ["ม้ามและต่อมน้ำเหลือง", "ไขกระดูกและต่อมไทมัส", "ทอนซิลและ Peyer's patches", "ตับและไต"], ans: 1 },
+                { q: "2. เซลล์ชนิดใดที่ทำหน้าที่ผลิตแอนติบอดี (Antibody)?", opts: ["T-lymphocyte", "Macrophage", "Plasma cell (พัฒนามาจาก B-cell)", "Natural Killer (NK) cell"], ans: 2 },
+                { q: "3. แอนติบอดีชนิดใดที่พบมากที่สุดในสารคัดหลั่งบริเวณเยื่อเมือก (Mucosal secretion) เช่น น้ำลายและน้ำตา?", opts: ["IgG", "IgM", "IgE", "IgA"], ans: 3 },
+                { q: "4. ปฏิกิริยาภูมิไวเกินชนิดที่ 1 (Type I Hypersensitivity) หรืออาการแพ้เฉียบพลัน ถูกควบคุมโดยแอนติบอดีชนิดใด?", opts: ["IgE", "IgG", "IgM", "IgA"], ans: 0 },
+                { q: "5. แอนติบอดีชนิดแรกที่ร่างกายสร้างขึ้นเมื่อได้รับการกระตุ้นจากแอนติเจนในครั้งแรก (Primary response) คือ?", opts: ["IgG", "IgM", "IgA", "IgE"], ans: 1 },
+                { q: "6. เซลล์ชนิดใดที่ทำหน้าที่นำเสนอแอนติเจน (Antigen-Presenting Cell: APC) แบบมืออาชีพ?", opts: ["Red blood cell", "Neutrophil", "Dendritic cell", "Platelet"], ans: 2 },
+                { q: "7. การที่ลูกสัตว์ได้รับภูมิคุ้มกันจากน้ำนมเหลือง (Colostrum) ของแม่ จัดเป็นภูมิคุ้มกันแบบใด?", opts: ["Active natural immunity", "Active artificial immunity", "Passive natural immunity", "Passive artificial immunity"], ans: 2 },
+                { q: "8. โมเลกุล MHC Class I ทำหน้าที่นำเสนอแอนติเจนให้แก่เซลล์ชนิดใด?", opts: ["Helper T-cell (CD4+)", "Cytotoxic T-cell (CD8+)", "B-cell", "Macrophage"], ans: 1 },
+                { q: "9. สารเติมแต่งในวัคซีนที่ช่วยกระตุ้นให้ระบบภูมิคุ้มกันตอบสนองต่อแอนติเจนได้ดีขึ้นเรียกว่าอะไร?", opts: ["Antibiotic", "Adjuvant", "Preservative", "Antitoxin"], ans: 1 },
+                { q: "10. ระบบคอมพลีเมนต์ (Complement system) มีผลลัพธ์สุดท้ายในการทำลายเชื้อโรคคืออะไร?", opts: ["สร้าง Antibody", "เกิดการเจาะรูที่เยื่อหุ้มเซลล์ของเชื้อโรค (MAC)", "หลั่ง Histamine", "สร้างหน่วยความจำ (Memory cells)"], ans: 1 }
+            ],
+            "เภสัชวิทยาทางสัตวแพทย์ 1": [
+                { q: "1. เภสัชจลนศาสตร์ (Pharmacokinetics) ศึกษาเกี่ยวกับกระบวนการใดในร่างกาย?", opts: ["กลไกการออกฤทธิ์ของยาต่อเซลล์", "ADME (การดูดซึม, การกระจายตัว, การเปลี่ยนแปลง, การขับถ่าย)", "ผลข้างเคียงของยา", "ขนาดของยาที่ทำให้เกิดพิษ"], ans: 1 },
+                { q: "2. อวัยวะใดเป็นอวัยวะหลักในการเปลี่ยนแปลงสภาพยา (Drug metabolism / Biotransformation)?", opts: ["ไต", "ปอด", "ตับ", "ลำไส้เล็ก"], ans: 2 },
+                { q: "3. การให้ยาทางใดที่มีค่าชีวปริมาณออกฤทธิ์ (Bioavailability) เท่ากับ 100% เสมอ?", opts: ["ให้ทางปาก (Oral)", "ฉีดเข้ากล้ามเนื้อ (Intramuscular)", "ฉีดเข้าใต้ผิวหนัง (Subcutaneous)", "ฉีดเข้าหลอดเลือดดำ (Intravenous)"], ans: 3 },
+                { q: "4. ยาที่มีคุณสมบัติไปจับกับตัวรับ (Receptor) แต่ไม่กระตุ้นให้เกิดการทำงาน (Blocker) เรียกว่าอะไร?", opts: ["Agonist", "Antagonist", "Partial agonist", "Enzyme inhibitor"], ans: 1 },
+                { q: "5. ปรากฏการณ์ First-pass effect มีผลทำให้ยามีลักษณะอย่างไร?", opts: ["ยาถูกขับออกทางปัสสาวะเร็วขึ้น", "ยาถูกทำลายที่ตับก่อนเข้าสู่ระบบไหลเวียนโลหิตหลัก", "ยาออกฤทธิ์ได้นานขึ้น", "ยาถูกดูดซึมผ่านกระเพาะอาหารได้ดีขึ้น"], ans: 1 },
+                { q: "6. ดัชนีการรักษา (Therapeutic Index: TI) ใช้บ่งบอกถึงสิ่งใดของยา?", opts: ["ความเร็วในการออกฤทธิ์", "ความแรงของยา (Potency)", "ความปลอดภัยของยา (Margin of safety)", "ระยะเวลาที่ยาอยู่ในกระแสเลือด"], ans: 2 },
+                { q: "7. กลุ่มยา NSAIDs (เช่น Meloxicam) ออกฤทธิ์ลดปวดและอักเสบโดยยับยั้งเอนไซม์ใด?", opts: ["Cyclooxygenase (COX)", "Monoamine oxidase (MAO)", "Acetylcholinesterase (AChE)", "Lipoxygenase (LOX)"], ans: 0 },
+                { q: "8. ยาพาราเซตามอล (Acetaminophen) ห้ามใช้ในสัตว์ชนิดใดเด็ดขาดเพราะทำให้เกิดพิษต่อเม็ดเลือดแดงและตับรุนแรง?", opts: ["สุนัข", "แมว", "ม้า", "โค"], ans: 1 },
+                { q: "9. ค่าครึ่งชีวิต (Half-life: t1/2) หมายถึงอะไร?", opts: ["เวลาที่ยาหมดฤทธิ์อย่างสมบูรณ์", "เวลาที่ยาถูกขับออกจากร่างกาย 100%", "เวลาที่ระดับยาในเลือดลดลงเหลือครึ่งหนึ่ง", "เวลาที่ยาเดินทางไปถึงตับ"], ans: 2 },
+                { q: "10. ยาที่กระตุ้นระบบประสาทพาราซิมพาเทติก (Cholinergic drugs) จะทำให้เกิดอาการใด?", opts: ["ม่านตาขยาย", "น้ำลายไหลและหัวใจเต้นช้าลง", "หลอดลมขยายตัว", "กล้ามเนื้อหัวใจบีบตัวแรงขึ้น"], ans: 1 }
+            ],
+            "ปรสิตวิทยาทางสัตวแพทย์": [
+                { q: "1. พยาธิหนอนหัวใจ (Heartworm) ในสุนัขมีชื่อวิทยาศาสตร์ว่าอะไร?", opts: ["Toxocara canis", "Dirofilaria immitis", "Ancylostoma caninum", "Trichuris vulpis"], ans: 1 },
+                { q: "2. พาหะ (Vector) นำโรคพยาธิหนอนหัวใจคือแมลงชนิดใด?", opts: ["เห็บ", "หมัด", "ยุง", "แมลงวัน"], ans: 2 },
+                { q: "3. พยาธิตัวตืดชนิดใดที่พบได้บ่อยในสุนัขและแมว โดยมีการติดต่อผ่านการกินหมัดที่มีระยะติดต่อ?", opts: ["Taenia solium", "Dipylidium caninum", "Echinococcus granulosus", "Fasciola hepatica"], ans: 1 },
+                { q: "4. ปรสิตเซลล์เดียว (Protozoa) ในเลือดชนิดใดที่เป็นสาเหตุของโรคไข้เห็บ (Tick fever) และทำลายเม็ดเลือดแดงในสุนัข?", opts: ["Babesia canis", "Leishmania donovani", "Trypanosoma evansi", "Toxoplasma gondii"], ans: 0 },
+                { q: "5. พยาธิไส้เดือนสุนัข (Toxocara canis) มีวิธีการติดต่อสู่ลูกสุนัขแรกเกิดที่สำคัญที่สุดทางใด?", opts: ["ผ่านทางรกและน้ำนม (Transplacental / Transmammary)", "โดนเห็บกัด", "กินหมัดเข้าไป", "ไข่พยาธิไชผ่านผิวหนัง"], ans: 0 },
+                { q: "6. ไรขี้เรื้อนชนิดใดที่อาศัยอยู่ในรูขุมขนของสุนัขและอาจทำให้เกิดโรคเมื่อภูมิคุ้มกันตก (Demodicosis)?", opts: ["Sarcoptes scabiei", "Otodectes cynotis", "Demodex canis", "Cheyletiella yasguri"], ans: 2 },
+                { q: "7. พยาธิใบไม้ตับ (Fasciola hepatica) ในสัตว์เคี้ยวเอื้อง มีสัตว์ชนิดใดเป็นโฮสต์กึ่งกลาง (Intermediate host)?", opts: ["ยุง", "หมัด", "หอยน้ำจืด", "ปูน้ำจืด"], ans: 2 },
+                { q: "8. โรค Coccidiosis ที่ทำให้เกิดอาการท้องเสียรุนแรงในสัตว์ปีก เกิดจากเชื้อโปรโตซัวสกุลใด?", opts: ["Giardia", "Eimeria", "Cryptosporidium", "Trichomonas"], ans: 1 },
+                { q: "9. ปรสิตเซลล์เดียวชนิดใดที่มีแมวเป็นโฮสต์จำเพาะ (Definitive host) และอาจก่อให้เกิดอันตรายต่อสตรีมีครรภ์?", opts: ["Toxoplasma gondii", "Giardia duodenalis", "Neospora caninum", "Plasmodium falciparum"], ans: 0 },
+                { q: "10. ภาวะ Myiasis หรือ 'โรคแผลแมลงวันชอนไช' เกิดจากการที่ระยะใดของแมลงวันเข้าไปเจริญในเนื้อเยื่อสัตว์?", opts: ["ไข่", "ตัวอ่อน (หนอนแมลงวัน)", "ดักแด้", "ตัวเต็มวัย"], ans: 1 }
+            ]
+        },
+	"year4": {
+            "อายุรศาสตร์สัตวแพทย์ 1": [
+                { q: "1. ค่าเวลาการคืนกลับของเลือดในหลอดเลือดฝอย (Capillary Refill Time: CRT) ที่ปกติในสุนัขควรเป็นเท่าใด?", opts: ["น้อยกว่า 2 วินาที", "3-4 วินาที", "5 วินาทีขึ้นไป", "ไม่มีขีดจำกัด"], ans: 0 },
+                { q: "2. สุนัขที่ป่วยเป็นภาวะหัวใจซีกซ้ายล้มเหลว (Left-sided heart failure) มักแสดงอาการทางคลินิกใดเด่นชัดที่สุด?", opts: ["ท้องมาน (Ascites)", "ไอและมีภาวะน้ำท่วมปอด (Pulmonary edema)", "ดีซ่าน (Jaundice)", "ปัสสาวะเป็นเลือด"], ans: 1 },
+                { q: "3. กลุ่มอาการกินน้ำมากและปัสสาวะมาก (PU/PD) 'ไม่' มักพบในโรคใด?", opts: ["โรคเบาหวาน (Diabetes mellitus)", "โรคไตเรื้อรัง (CKD)", "ฮอร์โมนไทรอยด์ต่ำ (Hypothyroidism)", "ฮอร์โมนต่อมหมวกไตสูง (Hyperadrenocorticism/Cushing)"], ans: 2 },
+                { q: "4. โรคเยื่อบุช่องท้องอักเสบติดต่อในแมว (FIP) มีสาเหตุจากการกลายพันธุ์ของเชื้อไวรัสชนิดใด?", opts: ["Feline Leukemia Virus", "Feline Immunodeficiency Virus", "Feline Coronavirus", "Feline Parvovirus"], ans: 2 },
+                { q: "5. ลูกสุนัขมีอาการอาเจียน ท้องเสียเป็นเลือด มีกลิ่นเหม็นคาวจัด และผลเลือดพบเม็ดเลือดขาวต่ำมาก (Leukopenia) นึกถึงโรคใดเป็นอันดับแรก?", opts: ["Canine Distemper", "Canine Parvovirus infection", "Rabies", "Leptospirosis"], ans: 1 },
+                { q: "6. การวินิจฉัยยืนยันโรคเบาหวานในสุนัข ต้องตรวจพบความผิดปกติในข้อใดร่วมกัน?", opts: ["น้ำตาลในเลือดต่ำและน้ำตาลในปัสสาวะ", "น้ำตาลในเลือดสูงอย่างต่อเนื่องและมีน้ำตาลในปัสสาวะ", "คีโตนในเลือดสูงอย่างเดียว", "โปรตีนรั่วในปัสสาวะ"], ans: 1 },
+                { q: "7. สุนัขที่มีอาการไอแห้งๆ เสียงดังคล้ายห่านร้อง (Honking cough) มักสัมพันธ์กับความผิดปกติใด?", opts: ["หลอดลมตีบแคบ (Tracheal collapse)", "กระเพาะอาหารบิดตัว (GDV)", "พยาธิเม็ดเลือด", "ปอดอักเสบจากเชื้อรา"], ans: 0 },
+                { q: "8. ภาวะ Hypoadrenocorticism ในสุนัข มีชื่อเรียกอีกอย่างหนึ่งว่าอะไร?", opts: ["Cushing's disease", "Addison's disease", "Grave's disease", "Hashimoto's disease"], ans: 1 },
+                { q: "9. แมวอายุมากที่มีอาการกินเก่งแต่น้ำหนักลด กระวนกระวาย ควรส่งตรวจค่าทางห้องปฏิบัติการใดเพื่อการวินิจฉัยเบื้องต้น?", opts: ["Total T4", "Insulin", "Cortisol", "BUN/Creatinine อย่างเดียว"], ans: 0 },
+                { q: "10. ข้อใดคืออาการทางคลินิกที่พบบ่อยของโรคไตเรื้อรัง (CKD) ในระยะท้าย?", opts: ["น้ำหนักตัวเพิ่มขึ้น", "ภาวะยูรีเมีย (Uremia) อาเจียน และมีแผลในปาก", "หัวใจเต้นช้าผิดปกติ", "ขนร่วงเป็นหย่อมๆ"], ans: 1 }
+            ],
+            "ศัลยศาสตร์และวิสัญญีวิทยาพื้นฐาน": [
+                { q: "1. ตามหลักการปลอดเชื้อ (Aseptic technique) ส่วนใดของเสื้อกาวน์ผ่าตัดที่ถือว่า 'ปราศจากเชื้อ'?", opts: ["ด้านหน้าตั้งแต่ระดับอกถึงระดับโต๊ะผ่าตัด และแขนเสื้อ", "ด้านหลังทั้งหมด", "ตั้งแต่คอจนถึงพื้น", "เฉพาะบริเวณข้อศอก"], ans: 0 },
+                { q: "2. คีมหนีบหลอดเลือด (Hemostatic forceps) ชนิดใดที่มีขนาดเล็ก มักใช้จับหลอดเลือดฝอย?", opts: ["Kelly forceps", "Rochester-Carmalt forceps", "Halsted Mosquito forceps", "Allis tissue forceps"], ans: 2 },
+                { q: "3. วัสดุเย็บแผล (Suture material) ในข้อใดจัดเป็นชนิด 'ละลายได้' (Absorbable)?", opts: ["Silk", "Nylon (Ethilon)", "Polyglactin 910 (Vicryl)", "Polypropylene (Prolene)"], ans: 2 },
+                { q: "4. การใช้ยาระงับความรู้สึกนำ (Preanesthetic medication) กลุ่ม Opioids มีจุดประสงค์หลักเพื่ออะไร?", opts: ["ลดกรดในกระเพาะ", "ให้ฤทธิ์ระงับปวด (Analgesia)", "ทำให้กล้ามเนื้อคลายตัว 100%", "กระตุ้นการหายใจ"], ans: 1 },
+                { q: "5. ผลข้างเคียงที่พบบ่อยที่สุดขณะฉีดยา Propofol เพื่อชักนำการสลบ (Induction) คืออะไร?", opts: ["หัวใจเต้นเร็วมาก", "ภาวะหยุดหายใจชั่วขณะ (Apnea)", "ชักเกร็ง", "อาเจียนรุนแรง"], ans: 1 },
+                { q: "6. จุดประสงค์หลักของการสอดท่อช่วยหายใจ (Endotracheal intubation) คือข้อใด?", opts: ["ป้องกันฟันผุขณะผ่าตัด", "รักษาทางเดินหายใจให้เปิดโล่งและให้ยาสลบแบบดม", "ใช้แทนสายยางให้อาหาร", "กระตุ้นเสียงร้องหลังตื่น"], ans: 1 },
+                { q: "7. ระยะแรกสุดของกระบวนการหายของแผล (Wound healing) คือระยะใด?", opts: ["Proliferative phase", "Remodeling phase", "Inflammatory phase", "Maturation phase"], ans: 2 },
+                { q: "8. การเตรียมตัวสัตว์ก่อนผ่าตัดแบบวางแผนล่วงหน้า (Elective surgery) ควรงดน้ำงดอาหารอย่างน้อยกี่ชั่วโมงในสุนัขและแมวโต?", opts: ["งดน้ำและอาหาร 1-2 ชั่วโมง", "งดอาหาร 8-12 ชั่วโมง และงดน้ำ 2-4 ชั่วโมง", "งดอาหาร 24 ชั่วโมง", "ไม่ต้องงด"], ans: 1 },
+                { q: "9. ยาสลบชนิดดม (Inhalant anesthetic) ที่นิยมใช้ในคลินิกสัตวแพทย์ปัจจุบันคือข้อใด?", opts: ["Isoflurane", "Ether", "Chloroform", "Nitrous oxide เดี่ยวๆ"], ans: 0 },
+                { q: "10. เครื่อง Pulse oximeter ใช้สำหรับวัดค่าอะไรขณะวางยาสลบ?", opts: ["ความดันโลหิต", "คลื่นไฟฟ้าหัวใจ", "ความอิ่มตัวของออกซิเจนในเลือด (SpO2)", "อุณหภูมิร่างกาย"], ans: 2 }
+            ],
+            "รังสีวิทยาและการวินิจฉัยด้วยภาพ": [
+                { q: "1. โครงสร้างใดที่มีความทึบรังสี (Radiopaque) มากที่สุดเมื่อถ่ายภาพรังสี (X-ray)?", opts: ["อากาศ (Air)", "ไขมัน (Fat)", "กระดูก (Bone)", "โลหะ (Metal)"], ans: 3 },
+                { q: "2. หลักการ ALARA ในการป้องกันอันตรายจากรังสี ย่อมาจากอะไร?", opts: ["As Low As Reasonably Achievable", "Always Look At Radiation Area", "Avoid Large Amount of Radiation Always", "Any Level Allowed Requires Approval"], ans: 0 },
+                { q: "3. การปรับเพิ่มค่า kVp บนเครื่องเอกซเรย์ มีผลอย่างไรต่อลำแสงรังสีเอ็กซ์?", opts: ["เพิ่มอำนาจทะลุทะลวง (Penetrating power)", "เพิ่มจำนวนรังสี (Quantity)", "ทำให้รังสีเคลื่อนที่ช้าลง", "ไม่มีผลใดๆ"], ans: 0 },
+                { q: "4. เครื่องมือการวินิจฉัยด้วยภาพชนิดใดที่เหมาะสมที่สุดในการดูการเคลื่อนไหวของลิ้นหัวใจแบบเรียลไทม์?", opts: ["Radiography (X-ray)", "Ultrasonography (Echocardiography)", "CT Scan", "MRI"], ans: 1 },
+                { q: "5. ท่าถ่ายภาพรังสีมาตรฐานที่ใช้ประเมินภาวะข้อสะโพกเสื่อม (Hip dysplasia) ในสุนัขคือท่าใด?", opts: ["Lateral pelvic view", "Ventrodorsal (VD) extended leg view", "Dorsoventral (DV) view", "Skyline view"], ans: 1 },
+                { q: "6. สารทึบรังสีชนิดใดที่นิยมใช้ให้สัตว์กินเพื่อประเมินความผิดปกติของทางเดินอาหาร?", opts: ["Barium sulfate", "Iodine solution", "Microbubbles", "Gadolinium"], ans: 0 },
+                { q: "7. ในภาพอัลตราซาวด์ โครงสร้างที่เป็นของเหลว (เช่น ปัสสาวะในกระเพาะปัสสาวะ) จะมีลักษณะอย่างไร?", opts: ["Hyperechoic (สีขาว)", "Isoechoic (สีเทา)", "Anechoic (สีดำ)", "Heterogeneous"], ans: 2 },
+                { q: "8. หากภาพเอกซเรย์ที่ออกมามืดเกินไป (Overexposed) ควรแก้ไขอย่างไร?", opts: ["เพิ่ม mAs", "ลด kVp หรือลด mAs", "เพิ่มเวลาการล้างฟิล์ม", "ขยับสัตว์ให้เข้าใกล้หลอดรังสีมากขึ้น"], ans: 1 },
+                { q: "9. การสวมเสื้อตะกั่ว (Lead apron) ขณะจับบังคับสัตว์ถ่ายภาพรังสี เพื่อป้องกันรังสีชนิดใด?", opts: ["Primary beam (รังสีปฐมภูมิ)", "Scatter radiation (รังสีกระเจิง)", "Cosmic radiation", "Microwave"], ans: 1 },
+                { q: "10. ข้อห้ามสำคัญในการทำ MRI (Magnetic Resonance Imaging) คือสิ่งใด?", opts: ["ห้ามนำวัตถุที่เป็นโลหะแม่เหล็กเข้าห้องตรวจ", "ห้ามให้สัตว์กินอาหาร 3 วัน", "ห้ามใช้ในสัตว์อายุน้อยกว่า 1 ปี", "ห้ามใช้ในสัตว์ที่มีกระดูกหัก"], ans: 0 }
+            ],
+            "สูติศาสตร์และเธริโอเจนวิทยา": [
+                { q: "1. ในวงรอบการเป็นสัดของสุนัข ระยะใดที่สุนัขตัวเมียจะยอมรับการผสมพันธุ์จากตัวผู้?", opts: ["Proestrus", "Estrus", "Diestrus", "Anestrus"], ans: 1 },
+                { q: "2. ฮอร์โมนใดที่มีหน้าที่สำคัญในการรักษาสภาพการตั้งท้อง (Maintain pregnancy)?", opts: ["Estrogen", "Progesterone", "Luteinizing Hormone (LH)", "Prolactin"], ans: 1 },
+                { q: "3. ระยะเวลาการตั้งท้อง (Gestation period) ปกติของสุนัขและแมวอยู่ที่ประมาณกี่วัน?", opts: ["45 วัน", "63 วัน (หรือประมาณ 2 เดือน)", "90 วัน", "120 วัน"], ans: 1 },
+                { q: "4. เครื่องมือใดเหมาะสมที่สุดในการยืนยันการตั้งท้องและตรวจดูการมีชีวิตของตัวอ่อน (Fetal viability) ในสุนัขช่วงอายุครรภ์ 25-30 วัน?", opts: ["การถ่ายภาพรังสี (X-ray)", "การทำอัลตราซาวด์ (Ultrasound)", "การคลำตรวจช่องท้อง", "การตรวจปัสสาวะ"], ans: 1 },
+                { q: "5. ภาวะคลอดลำบาก (Dystocia) ในสุนัข อาจมีสาเหตุมาจากอะไรได้บ้าง?", opts: ["มดลูกไม่มีแรงบีบตัว (Uterine inertia)", "ลูกสัตว์มีขนาดใหญ่เกินไป", "เชิงกรานแม่แคบ", "ถูกทุกข้อ"], ans: 3 },
+                { q: "6. โรคมดลูกอักเสบเป็นหนอง (Pyometra) ในสุนัข มักเกิดขึ้นในช่วงระยะใดของวงรอบการเป็นสัด?", opts: ["Proestrus", "Estrus", "Diestrus", "Anestrus"], ans: 2 },
+                { q: "7. ยาชนิดใดที่มักใช้ฉีดเพื่อกระตุ้นการบีบตัวของกล้ามเนื้อมดลูกในกรณีที่มดลูกไม่มีแรงเบ่งคลอด (โดยที่ไม่มีการอุดกั้นทางเดินคลอด)?", opts: ["Oxytocin", "Dexamethasone", "Atropine", "Epinephrine"], ans: 0 },
+                { q: "8. วัวนมมีระยะเวลาการตั้งท้องประมาณกี่วัน?", opts: ["150 วัน", "210 วัน", "280-285 วัน (ประมาณ 9 เดือน)", "365 วัน"], ans: 2 },
+                { q: "9. ภาวะที่อัณฑะไม่เคลื่อนลงมาอยู่ในถุงอัณฑะ (Retained testicle) เรียกว่าอะไร?", opts: ["Phimosis", "Paraphimosis", "Cryptorchidism", "Orchitis"], ans: 2 },
+                { q: "10. การถ่ายภาพเอกซเรย์เพื่อยืนยันจำนวนลูกสุนัข จะสามารถเห็นโครงร่างกระดูก (Fetal skeleton) ได้ชัดเจนที่สุดเมื่ออายุครรภ์ประมาณกี่วันขึ้นไป?", opts: ["20 วัน", "30 วัน", "45 วันขึ้นไป", "เกิดแล้วเท่านั้น"], ans: 2 }
+            ],
+            "การจัดการสุขภาพฝูงสัตว์": [
+                { q: "1. เป้าหมายสูงสุดของการจัดการสุขภาพฝูงสัตว์ (Herd Health Management) คืออะไร?", opts: ["การรักษาสัตว์รายตัวให้หายป่วย", "การป้องกันโรคและเพิ่มประสิทธิภาพผลผลิตของฝูงสัตว์", "การลดจำนวนสัตว์ในฟาร์ม", "การขายยารักษาสัตว์ให้มากที่สุด"], ans: 1 },
+                { q: "2. หลักการความปลอดภัยทางชีวภาพ (Biosecurity) ข้อใดช่วยป้องกันการนำเชื้อโรคใหม่เข้าสู่ฟาร์มได้ดีที่สุด?", opts: ["การกักกันสัตว์ใหม่ (Quarantine) ก่อนนำเข้ารวมฝูง", "การเพิ่มปริมาณอาหาร", "การอาบน้ำให้สัตว์ทุกวัน", "การให้ยาปฏิชีวนะรวมในอาหารตลอดเวลา"], ans: 0 },
+                { q: "3. สาเหตุหลักของโรคเต้านมอักเสบ (Mastitis) ในโคนมคืออะไร?", opts: ["การติดเชื้อแบคทีเรีย", "การขาดแคลเซียม", "กรรมพันธุ์", "การรีดนมช้า"], ans: 0 },
+                { q: "4. การวัดค่า Somatic Cell Count (SCC) ในน้ำนม ใช้เป็นตัวชี้วัดเรื่องใด?", opts: ["ปริมาณไขมันในนม", "สุขภาพเต้านมและการอักเสบ", "ปริมาณโปรตีนในนม", "อายุของแม่โค"], ans: 1 },
+                { q: "5. ระบบการเลี้ยงแบบ 'All-in, All-out' นิยมใช้ในฟาร์มสัตว์ชนิดใดเพื่อตัดวงจรโรค?", opts: ["โคนมและม้า", "สุกรและสัตว์ปีก", "สุนัขและแมว", "ช้างและสุกร"], ans: 1 },
+                { q: "6. การให้ลูกโคแรกเกิดได้กินนมน้ำเหลือง (Colostrum) อย่างเพียงพอภายใน 12-24 ชั่วโมงแรก มีความสำคัญอย่างไร?", opts: ["เพื่อรับภูมิคุ้มกันแบบรับมา (Passive immunity transfer)", "เพื่อให้ลูกโคตัวโตเร็วกว่าปกติ 2 เท่า", "เพื่อเปลี่ยนสีขน", "เพื่อป้องกันพยาธิลำไส้"], ans: 0 },
+                { q: "7. โรคปากและเท้าเปื่อย (Foot and Mouth Disease: FMD) สามารถติดต่อในสัตว์กลุ่มใด?", opts: ["สัตว์ปีก", "สัตว์กีบคู่ (เช่น โค กระบือ สุกร แพะ แกะ)", "สัตว์กีบเดี่ยว (ม้า)", "สัตว์กินเนื้อ"], ans: 1 },
+                { q: "8. โปรแกรมการทำวัคซีนในฟาร์มจัดเป็นการป้องกันโรคระดับใด?", opts: ["Primary prevention (ป้องกันปฐมภูมิ)", "Secondary prevention", "Tertiary prevention", "Quaternary prevention"], ans: 0 },
+                { q: "9. การประเมินคะแนนสภาพร่างกาย (Body Condition Score: BCS) ในโคนม ใช้เพื่อประเมินเรื่องใด?", opts: ["ความแข็งแรงของกีบเท้า", "สถานะทางโภชนาการและพลังงานสำรองของร่างกาย", "ระดับฮอร์โมนในเลือด", "พันธุกรรมความสามารถในการให้นม"], ans: 1 },
+                { q: "10. โรค Zoonosis ในโคนมโรคใดที่ทำให้แม่โคแท้งลูกและสามารถติดต่อสู่คนผู้ปฏิบัติงานได้?", opts: ["Rabies", "Brucellosis (โรคแท้งติดต่อ)", "Bovine Viral Diarrhea (BVD)", "Ketosis"], ans: 1 }
+            ]
+        },
+	"year5": {
+            "โรคติดต่อระหว่างสัตว์และคน": [
+                { q: "1. สัตว์ชนิดใดเป็นพาหะนำโรคพิษสุนัขบ้า (Rabies) ที่สำคัญที่สุดในประเทศไทย?", opts: ["ค้างคาว", "แมว", "สุนัข", "หนู"], ans: 2 },
+                { q: "2. เชื้อแบคทีเรียใดที่เป็นสาเหตุของโรคฉี่หนู (Leptospirosis) และติดต่อสู่คนผ่านทางบาดแผลหรือเยื่อบุ?", opts: ["Streptococcus suis", "Leptospira interrogans", "Bacillus anthracis", "Brucella abortus"], ans: 1 },
+                { q: "3. การรับประทานหมูดิบหรือเลือดหมูดิบ เสี่ยงต่อการติดเชื้อแบคทีเรียชนิดใดที่ทำให้เกิดอาการหูดับในคน?", opts: ["Salmonella spp.", "Streptococcus suis", "Escherichia coli", "Listeria monocytogenes"], ans: 1 },
+                { q: "4. โรคแท้งติดต่อ (Brucellosis) ในโค กระบือ สามารถติดต่อสู่คนได้ทางใดเป็นหลัก?", opts: ["การถูกเห็บกัด", "การสูดดมอากาศในฟาร์ม", "การดื่มนมดิบที่ไม่ได้ผ่านการพาสเจอไรซ์", "การถูกโคขวิด"], ans: 2 },
+                { q: "5. สตรีมีครรภ์ควรระวังการสัมผัสอุจจาระแมวเนื่องจากอาจเสี่ยงต่อการติดเชื้อปรสิตชนิดใดที่ทำให้ทารกวิรูปได้?", opts: ["Toxoplasma gondii", "Giardia lamblia", "Toxocara cati", "Dipylidium caninum"], ans: 0 },
+                { q: "6. โรคไข้หวัดนก (Avian Influenza) สายพันธุ์ใดที่เคยมีการระบาดอย่างรุนแรงจากสัตว์ปีกสู่คนในทวีปเอเชีย?", opts: ["H1N1", "H5N1", "H3N2", "H7N9"], ans: 1 },
+                { q: "7. แนวคิด One Health (สุขภาพหนึ่งเดียว) หมายถึงการบูรณาการความร่วมมือด้านสุขภาพของสิ่งใด?", opts: ["คน, สัตว์, และสิ่งแวดล้อม", "สัตวแพทย์และแพทย์", "สัตว์ป่าและสัตว์เลี้ยง", "อาหารและยา"], ans: 0 },
+                { q: "8. เชื้อ Bacillus anthracis ก่อให้เกิดโรคแอนแทรกซ์ (Anthrax) สามารถทนทานในดินได้นานหลายสิบปีเนื่องจากกลไกใด?", opts: ["การสร้างแคปซูลหนา", "การเปลี่ยนรูปแบบเป็นไวรัส", "การสร้างสปอร์ (Endospore)", "การอาศัยอยู่ในตัวไส้เดือน"], ans: 2 },
+                { q: "9. ไวรัส Nipah มีสัตว์ชนิดใดเป็นพาหะรังโรค (Reservoir host) ตามธรรมชาติ?", opts: ["สุกร", "ค้างคาวแม่ไก่", "หนูท่อ", "ลิงแม็กแคก"], ans: 1 },
+                { q: "10. เชื้อรา Dermatophyte ชนิดใดที่ติดต่อจากสัตว์เลี้ยงสู่คนและก่อให้เกิดโรคกลาก (Ringworm) ได้บ่อยที่สุด?", opts: ["Microsporum canis", "Malassezia pachydermatis", "Candida albicans", "Aspergillus flavus"], ans: 0 }
+            ],
+            "สัตวแพทย์สาธารณสุข": [
+                { q: "1. หน้าที่สำคัญของสัตวแพทย์สาธารณสุขในโรงฆ่าสัตว์คืออะไร?", opts: ["การรักษาโรคให้สัตว์ก่อนเชือด", "การตรวจรับรองเนื้อสัตว์ก่อนและหลังตาย (Ante-mortem & Post-mortem inspection)", "การเพาะพันธุ์สัตว์ให้ได้น้ำหนักดี", "การผลิตยาสัตว์"], ans: 1 },
+                { q: "2. ระบบ HACCP ในอุตสาหกรรมอาหารย่อมาจากอะไร?", opts: ["Health And Care Control Protocol", "Hazard Analysis and Critical Control Point", "Hygiene And Cleanliness Certification Program", "Hazard Animal Control Center Project"], ans: 1 },
+                { q: "3. ระยะหยุดยา (Withdrawal period) มีความสำคัญอย่างไรในทางสัตวแพทย์สาธารณสุข?", opts: ["เพื่อให้ยาสะสมในเนื้อสัตว์ช่วยฆ่าเชื้อให้คนกิน", "เพื่อป้องกันปัญหาสารตกค้างในเนื้อสัตว์ นม หรือไข่", "เพื่อให้สัตว์มีน้ำหนักตัวเพิ่มขึ้น", "เพื่อให้ยาออกฤทธิ์ได้สูงสุดก่อนฆ่า"], ans: 1 },
+                { q: "4. ปัญหา Antimicrobial Resistance (AMR) หรือเชื้อดื้อยา เกิดจากพฤติกรรมใดในฟาร์มปศุสัตว์มากที่สุด?", opts: ["การใช้ยาปฏิชีวนะอย่างพร่ำเพรื่อและผิดขนาด", "การใช้วัคซีนมากเกินไป", "การให้อาหารที่มีโปรตีนสูง", "การอาบน้ำสัตว์บ่อยเกินไป"], ans: 0 },
+                { q: "5. เชื้อแบคทีเรียใดที่มักปนเปื้อนในเนื้อไก่และเป็นสาเหตุของอาหารเป็นพิษในคนบ่อยที่สุด?", opts: ["Campylobacter spp. และ Salmonella spp.", "Streptococcus spp.", "Mycoplasma gallisepticum", "Brucella suis"], ans: 0 },
+                { q: "6. การพาสเจอไรซ์นม (Pasteurization) ทำเพื่อจุดประสงค์ใด?", opts: ["ทำให้นมเก็บได้นาน 10 ปี", "ทำลายเชื้อแบคทีเรียก่อโรคแต่ยังคงคุณค่าทางอาหาร", "สกัดไขมันเนยออก", "ทำให้นมมีรสชาติหวานขึ้น"], ans: 1 },
+                { q: "7. โรคพยาธิทริคิโนซิส (Trichinosis) ป้องกันได้ด้วยวิธีใด?", opts: ["ปรุงเนื้อสุกรให้สุกทั่วถึงก่อนรับประทาน", "การล้างเนื้อสุกรด้วยน้ำเกลือ", "การแช่แข็งเนื้อสุกรที่ 0 องศา 1 วัน", "กินเนื้อหมูดิบร่วมกับมะนาว"], ans: 0 },
+                { q: "8. สิ่งใดคือหลักการสำคัญของ Cold Chain (ห่วงโซ่ความเย็น)?", opts: ["การควบคุมอุณหภูมิของอาหารและวัคซีนให้คงที่ตลอดการขนส่ง", "การแช่แข็งสัตว์ทั้งเป็นก่อนเชือด", "การใช้น้ำแข็งล้างคอกสัตว์", "การเปิดแอร์ในฟาร์ม"], ans: 0 },
+                { q: "9. ในการตรวจเนื้อสัตว์หลังตาย (Post-mortem) หากพบจุดฝีหนองกระจายทั่วตับและปอด ควรตัดสินใจอย่างไร?", opts: ["ตัดทิ้งเฉพาะตับและปอด ส่วนอื่นขายได้", "นำเนื้อไปต้มสุกแล้วขาย", "ทำลายซากสัตว์นั้นทั้งตัว (Total condemnation)", "ขายเป็นอาหารสัตว์เท่านั้น"], ans: 2 },
+                { q: "10. ข้อใดคือเป้าหมายหลักของ Food Security (ความมั่นคงทางอาหาร)?", opts: ["ทุกคนมีอาหารที่เพียงพอ ปลอดภัย และมีคุณค่าทางโภชนาการเข้าถึงได้", "การห้ามนำเข้าอาหารจากต่างประเทศ", "การบังคับให้ทุกคนกินมังสวิรัติ", "การผลิตอาหารให้ได้จำนวนมากที่สุดโดยไม่สนคุณภาพ"], ans: 0 }
+            ],
+            "คลินิกปฏิบัติสัตว์เล็ก / สัตว์ใหญ่ / สัตว์ป่า": [
+                { q: "1. คลินิกสัตว์เล็ก: แมวเพศผู้มีอาการเบ่งปัสสาวะ ร้องเจ็บปวด และเลียอวัยวะเพศบ่อยครั้ง ภาวะฉุกเฉินที่ต้องนึกถึงคือ?", opts: ["โรคนิ่วหรือการอุดตันของท่อปัสสาวะ (FLUTD/Urethral obstruction)", "ภาวะไตวายเรื้อรัง", "พยาธิเม็ดเลือด", "ลำไส้อักเสบ"], ans: 0 },
+                { q: "2. คลินิกสัตว์เล็ก: อัตราการกดหน้าอกต่อการช่วยหายใจในการทำ CPR สุนัขและแมว (กรณีมีผู้ช่วยเหลือ 1 คน) คือเท่าใด?", opts: ["15:2", "30:2", "5:1", "กดหน้าอกอย่างเดียว 100-120 ครั้ง/นาที ต่อการหายใจ 10 ครั้ง/นาที"], ans: 1 },
+                { q: "3. คลินิกสัตว์ใหญ่: แม่โคหลังคลอดมีอาการลุกไม่ขึ้น (Downer cow) คอพับไปด้านข้าง สัญญาณชีพต่ำ เกิดจากภาวะใด?", opts: ["Hypocalcemia (Milk fever)", "Hypomagnesemia (Grass tetany)", "Ketosis", "Mastitis"], ans: 0 },
+                { q: "4. คลินิกสัตว์ใหญ่: อาการปวดเสียดท้อง (Colic) ในม้า มักแสดงพฤติกรรมอย่างไร?", opts: ["นอนนิ่งไม่ขยับ", "หอบ หายใจเร็ว", "เตะท้องตัวเอง กลิ้งเกลือกบนพื้น และมองที่สีข้าง", "มีไข้สูงกว่า 40 องศา"], ans: 2 },
+                { q: "5. คลินิกสัตว์ป่า: ภาวะ Capture Myopathy ในสัตว์ป่ากีบเท้า (เช่น กวาง) เกิดจากสาเหตุใด?", opts: ["การติดเชื้อแบคทีเรียในเลือด", "ความเครียดและการออกแรงมากเกินไปขณะถูกจับตัว นำไปสู่การสลายของกล้ามเนื้อ", "การวางยาสลบเกินขนาด", "การขาดแคลเซียม"], ans: 1 },
+                { q: "6. คลินิกสัตว์ป่า/Exotic: ลิงแสม (Macaque) เป็นพาหะของไวรัสชนิดใดที่ทำให้เกิดเยื่อหุ้มสมองอักเสบและเป็นอันตรายถึงชีวิตในคน?", opts: ["Rabies virus", "Herpes B virus (Macacine alphaherpesvirus 1)", "Ebola virus", "Marburg virus"], ans: 1 },
+                { q: "7. คลินิก Exotic: อีกัวน่าที่มีอาการกระดูกเปราะ ขากรรไกรนิ่ม เกิดจากโรคทางเมแทบอลิซึม (MBD) ซึ่งขาดปัจจัยใด?", opts: ["ขาดวิตามินซี", "ขาดแคลเซียมและรังสี UVB", "ขาดโปรตีนจากเนื้อสัตว์", "ขาดธาตุเหล็ก"], ans: 1 },
+                { q: "8. คลินิกสัตว์เล็ก: การวินิจฉัยและรักษาที่เด็ดขาดที่สุดสำหรับภาวะมดลูกอักเสบเป็นหนอง (Pyometra) แบบคอปิดในสุนัขคือ?", opts: ["ให้ยาปฏิชีวนะ 1 เดือน", "การผ่าตัดรังไข่และมดลูก (Ovariohysterectomy) ฉุกเฉิน", "การล้างมดลูกด้วยน้ำเกลือ", "การให้ฮอร์โมนเอสโตรเจน"], ans: 1 },
+                { q: "9. คลินิกสัตว์ใหญ่: การทดสอบ CMT (California Mastitis Test) ในโคนม ใช้เพื่อประเมินอะไร?", opts: ["จำนวนเม็ดเลือดขาว (Somatic cell) ในน้ำนม เพื่อตรวจเต้านมอักเสบแบบไม่แสดงอาการ", "ปริมาณโปรตีนในน้ำนม", "ไขมันในน้ำนม", "แบคทีเรียโคลิฟอร์มในนม"], ans: 0 },
+                { q: "10. ทั่วไป: สิ่งสำคัญที่สุดในการปฏิบัติงานในคลินิกสัตว์ทุกประเภทเพื่อป้องกันการแพร่กระจายเชื้อโรคคือ?", opts: ["การใส่ถุงมือตลอดเวลา", "การล้างมือและการจัดการระบบความปลอดภัยทางชีวภาพ (Biosecurity)", "การฉีดวัคซีนให้หมอ", "การใช้ยาปฏิชีวนะป้องกัน"], ans: 1 }
+            ],
+            "กฎหมายและข้อบังคับทางสัตวแพทย์": [
+                { q: "1. การประกอบวิชาชีพการสัตวแพทย์ในประเทศไทย ถูกควบคุมและดูแลโดยหน่วยงานใด?", opts: ["กระทรวงเกษตรและสหกรณ์", "สัตวแพทยสภา", "กรมปศุสัตว์", "กระทรวงสาธารณสุข"], ans: 1 },
+                { q: "2. หากพบการระบาดของโรคปากและเท้าเปื่อย (FMD) ในฟาร์ม ตาม พ.ร.บ. โรคระบาดสัตว์ ต้องแจ้งเจ้าหน้าที่ภายในเวลาเท่าใด?", opts: ["ภายใน 12 ชั่วโมง", "ภายใน 24 ชั่วโมง", "ภายใน 3 วัน", "ภายใน 1 สัปดาห์"], ans: 0 },
+                { q: "3. พ.ร.บ. ป้องกันการทารุณกรรมและการจัดสวัสดิภาพสัตว์ พ.ศ. 2557 กำหนดโทษสูงสุดสำหรับการทารุณกรรมสัตว์ไว้เท่าใด?", opts: ["จำคุกไม่เกิน 1 ปี หรือปรับไม่เกิน 2 หมื่นบาท", "จำคุกไม่เกิน 2 ปี หรือปรับไม่เกิน 4 หมื่นบาท", "จำคุกไม่เกิน 3 ปี หรือปรับไม่เกิน 1 แสนบาท", "จำคุกไม่เกิน 5 ปี"], ans: 1 },
+                { q: "4. การเปิดสถานพยาบาลสัตว์ (คลินิก/โรงพยาบาลสัตว์) ต้องขออนุญาตตามกฎหมายฉบับใด?", opts: ["พ.ร.บ. สถานพยาบาลสัตว์", "พ.ร.บ. วิชาชีพการสัตวแพทย์", "พ.ร.บ. ยา", "พ.ร.บ. ควบคุมอาคาร"], ans: 0 },
+                { q: "5. สัตวแพทย์สามารถทำการการุณยฆาต (Euthanasia) สัตว์ได้โดยไม่ผิดกฎหมายป้องกันการทารุณกรรมสัตว์ในกรณีใด?", opts: ["เจ้าของเบื่อไม่อยากเลี้ยงแล้ว", "สัตว์มีพฤติกรรมดุร้ายกัดเฟอร์นิเจอร์", "สัตว์ป่วยเป็นโรคที่รักษาไม่หายและกำลังทุกข์ทรมานอย่างหนักตามความเห็นทางวิชาการ", "สัตว์แก่เกินไป"], ans: 2 },
+                { q: "6. การสั่งจ่ายยาเสพติดให้โทษหรือวัตถุออกฤทธิ์ต่อจิตและประสาทสำหรับสัตว์ สัตวแพทย์ต้องปฏิบัติตามกฎหมายของหน่วยงานใด?", opts: ["อย. (สำนักงานคณะกรรมการอาหารและยา)", "กรมปศุสัตว์", "สัตวแพทยสภา", "กระทรวงมหาดไทย"], ans: 0 },
+                { q: "7. การรักษาความลับของผู้ป่วย (สัตว์ป่วยและข้อมูลเจ้าของ) จัดอยู่ในหลักการใด?", opts: ["กฎหมายอาญา", "จรรยาบรรณแห่งวิชาชีพสัตวแพทย์", "พ.ร.บ. ข้อมูลข่าวสาร", "กฎหมายแพ่ง"], ans: 1 },
+                { q: "8. หากสัตวแพทย์ทำการรักษาผิดพลาดโดยความประมาทเลินเล่อจนสัตว์เสียชีวิต อาจถูกฟ้องร้องทางกฎหมายใด?", opts: ["กฎหมายอาญา (ข้อหาฆ่าผู้อื่น)", "กฎหมายแพ่ง (ละเมิด/เรียกค่าเสียหาย) และจรรยาบรรณวิชาชีพ", "กฎหมายแรงงาน", "กฎหมายคุ้มครองผู้บริโภคเท่านั้น"], ans: 1 },
+                { q: "9. ผู้ที่ไม่มีใบอนุญาตประกอบวิชาชีพการสัตวแพทย์ แต่ทำการรักษาสัตว์และเรียกเก็บเงิน มีความผิดฐานใด?", opts: ["ประกอบวิชาชีพเถื่อน (หมอเถื่อน)", "ฉ้อโกง", "ทารุณกรรมสัตว์", "หลีกเลี่ยงภาษี"], ans: 0 },
+                { q: "10. หลักการ 'Informed Consent' หมายถึงอะไรในทางคลินิก?", opts: ["การบังคับให้เจ้าของเซ็นชื่อ", "การที่สัตวแพทย์อธิบายถึงพยาธิสภาพ แนวทางรักษา ความเสี่ยง และค่าใช้จ่าย ให้เจ้าของยินยอมก่อนรักษา", "การขออนุญาตใช้ยาจาก อย.", "การเซ็นรับมอบศพสัตว์"], ans: 1 }
+            ],
+            "วิชาเลือกเฉพาะทาง": [
+                { q: "1. คลินิกผิวหนัง: การวินิจฉัยการติดเชื้อยีสต์ Malassezia บนผิวหนังสุนัข วิธีใดรวดเร็วและเป็นมาตรฐานที่สุด?", opts: ["เพาะเชื้อ (Fungal culture)", "การทำ Tape strip และย้อมสีดูด้วยกล้องจุลทรรศน์ (Cytology)", "การเจาะเลือด", "การทำ Skin biopsy"], ans: 1 },
+                { q: "2. คลินิกตา: เครื่องมือ Tonometry ใช้สำหรับวัดค่าอะไรในทางจักษุวิทยา?", opts: ["การผลิตน้ำตา", "ความดันภายในลูกตา (Intraocular pressure: IOP)", "ความโค้งของกระจกตา", "การตอบสนองต่อแสงของม่านตา"], ans: 1 },
+                { q: "3. คลินิกหัวใจ: โรคหัวใจที่พบบ่อยที่สุดในสุนัขพันธุ์เล็กที่มีอายุมากคือโรคใด?", opts: ["Dilated Cardiomyopathy (DCM)", "Myxomatous Mitral Valve Disease (MMVD)", "Heartworm disease", "Congenital heart defects"], ans: 1 },
+                { q: "4. คลินิกมะเร็ง: การเจาะดูดเซลล์ด้วยเข็มขนาดเล็ก (Fine Needle Aspiration: FNA) มีประโยชน์สูงสุดในก้อนเนื้องอกชนิดใด?", opts: ["Mast cell tumor", "Osteosarcoma", "Hemangiosarcoma", "Brain tumor"], ans: 0 },
+                { q: "5. คลินิกทันตกรรม: สัญญาณแรกเริ่มของโรคปริทันต์ (Periodontal disease) ในสุนัขคืออะไร?", opts: ["ฟันโยก", "เหงือกอักเสบแดงและมีเลือดออกง่าย (Gingivitis)", "รากฟันเป็นหนอง", "เคลือบฟันบางลง"], ans: 1 },
+                { q: "6. คลินิกระบบประสาท: ยาตัวแรก (First-line) ที่ใช้ฉีดเข้าหลอดเลือดดำเพื่อระงับอาการชักแบบเฉียบพลัน (Status epilepticus) คือ?", opts: ["Phenobarbital", "Diazepam", "Gabapentin", "Levetiracetam"], ans: 1 },
+                { q: "7. คลินิก Exotic: ภาวะลำไส้หยุดเคลื่อนตัว (GI stasis) ในกระต่าย มักเกิดจากสาเหตุใด?", opts: ["การขาดโปรตีน", "อาหารที่มีเยื่อใย (Fiber) ต่ำและความเครียด", "การกินหญ้าแห้งมากเกินไป", "การติดเชื้อไวรัส"], ans: 1 },
+                { q: "8. คลินิกม้า: ภาวะ Laminitis (เจ็บกีบ) มักมีความสัมพันธ์โดยตรงกับการจัดการเรื่องใดที่ผิดพลาด?", opts: ["การให้ม้าวิ่งเร็วเกินไป", "การให้อาหารข้น (คาร์โบไฮเดรต) ในปริมาณที่สูงเกินไป", "การไม่ใส่เกือกม้า", "การปล่อยม้าตากฝน"], ans: 1 },
+                { q: "9. คลินิกสุกร: ไวรัส PRRS ก่อให้เกิดกลุ่มอาการในระบบใดของสุกรเป็นหลัก?", opts: ["ระบบสืบพันธุ์และระบบทางเดินหายใจ", "ระบบทางเดินอาหาร", "ระบบประสาท", "ระบบผิวหนัง"], ans: 0 },
+                { q: "10. คลินิกสัตว์น้ำ: ไวรัสชนิดใดที่ทำให้เกิดอัตราการตายสูงในปลาคาร์พและมีอาการเหงือกเน่า?", opts: ["White Spot Syndrome Virus", "Koi Herpesvirus (KHV)", "Tilapia Lake Virus", "Spring Viraemia of Carp Virus"], ans: 1 }
+            ]
+        },
+	"year6": {
+            "โครงการวิจัย": [
+                { q: "1. ขั้นตอนแรกของการทำโครงร่างวิจัย (Research Proposal) คือข้อใด?", opts: ["การตั้งสมมติฐาน", "การกำหนดปัญหาและหัวข้อวิจัย", "การวิเคราะห์ข้อมูล", "การทบทวนวรรณกรรม"], ans: 1 },
+                { q: "2. การทดสอบสถิติใดใช้สำหรับเปรียบเทียบค่าเฉลี่ยของกลุ่มตัวอย่าง 2 กลุ่มที่เป็นอิสระต่อกัน?", opts: ["Paired t-test", "Independent t-test", "ANOVA", "Chi-square"], ans: 1 },
+                { q: "3. ในการวิจัยทางสัตวแพทย์ IACUC คือคณะกรรมการที่ทำหน้าที่ใด?", opts: ["พิจารณาทุนวิจัย", "กำกับดูแลและพิจารณาจรรยาบรรณการใช้สัตว์ทดลอง", "ตีพิมพ์ผลงานวิจัย", "ตรวจสอบสถิติ"], ans: 1 },
+                { q: "4. ค่า p-value < 0.05 หมายความว่าอย่างไรในการทดสอบสมมติฐาน?", opts: ["ยอมรับสมมติฐานหลัก (H0)", "ปฏิเสธสมมติฐานหลัก (H0) อย่างมีนัยสำคัญทางสถิติ", "การทดลองผิดพลาด", "ข้อมูลไม่เพียงพอ"], ans: 1 },
+                { q: "5. รูปแบบการวิจัยใดที่มีความน่าเชื่อถือที่สุดในการประเมินประสิทธิภาพของยา?", opts: ["Case report", "Cohort study", "Randomized Controlled Trial (RCT)", "Cross-sectional study"], ans: 2 },
+                { q: "6. ตัวแปรที่เป็นเหตุหรือปัจจัยที่ผู้วิจัยต้องการศึกษา เรียกว่าอะไร?", opts: ["ตัวแปรตาม", "ตัวแปรแทรกซ้อน", "ตัวแปรควบคุม", "ตัวแปรต้น (Independent variable)"], ans: 3 },
+                { q: "7. ข้อมูลประเภทใดจัดเป็น Nominal scale?", opts: ["น้ำหนักของสุนัข", "เพศของสัตว์ (ผู้/เมีย)", "อุณหภูมิร่างกาย", "คะแนนความเจ็บปวด (1-10)"], ans: 1 },
+                { q: "8. Plagiarism ในการเขียนรายงานการวิจัยคืออะไร?", opts: ["การเขียนผิดหลักไวยากรณ์", "การนำเสนอข้อมูลเป็นเท็จ", "การคัดลอกผลงานหรือแนวคิดผู้อื่นโดยไม่อ้างอิง", "การตีพิมพ์ในวารสารที่ไม่น่าเชื่อถือ"], ans: 2 },
+                { q: "9. การสุ่มตัวอย่างแบบ Simple random sampling คืออะไร?", opts: ["สุ่มเฉพาะสัตว์ที่ป่วย", "สุ่มโดยให้โอกาสทุกหน่วยในประชากรได้รับเลือกเท่ากัน", "สุ่มเลือกสัตว์ที่อยู่ใกล้ที่สุด", "สุ่มตามความสมัครใจของเจ้าของ"], ans: 1 },
+                { q: "10. ข้อใดคือความสำคัญของการเขียน 'Literature review'?", opts: ["เพื่อเพิ่มความยาวของรายงาน", "เพื่อค้นหาช่องว่างของงานวิจัย (Research gap) และสร้างกรอบแนวคิด", "เพื่อให้ผู้สนับสนุนทุนพอใจ", "เพื่อสรุปผลการทดลองของเรา"], ans: 1 }
+            ],
+            "ศัลยศาสตร์สัตว์ใหญ่": [
+                { q: "1. การวางยาสลบเพื่อผ่าตัดม้า (Equine anesthesia) ต้องระวังภาวะแทรกซ้อนที่รุนแรงที่สุดหลังฟื้นตัวคือข้อใด?", opts: ["อาเจียน", "Myopathy (กล้ามเนื้ออักเสบจากการกดทับ)", "ท้องเสีย", "ผมร่วง"], ans: 1 },
+                { q: "2. การทำศัลยกรรมเพื่อเอาสิ่งแปลกปลอมออกจากกระเพาะหมัก (Rumenotomy) ในโค นิยมเปิดผ่าบริเวณใด?", opts: ["Right paralumbar fossa", "Ventral midline", "Left paralumbar fossa", "Flank ทั้งสองข้าง"], ans: 2 },
+                { q: "3. การทำหมันโคตัวผู้ (Castration) แบบปิดด้วยเครื่องมือ Burdizzo อาศัยหลักการใด?", opts: ["ตัดอัณฑะทิ้งทั้งหมด", "ทำลาย Spermatic cord โดยไม่ทำให้เกิดแผลเปิดที่ผิวหนัง", "ฉีดยาทำลายอัณฑะ", "รัดถุงอัณฑะจนหลุด"], ans: 1 },
+                { q: "4. ยาชาเฉพาะที่ตัวใดที่สัตวแพทย์มักใช้ในการ Block เส้นประสาทเพื่อตรวจหาตำแหน่งอาการเจ็บกีบ (Lameness) ในม้า?", opts: ["Diazepam", "Mepivacaine หรือ Lidocaine", "Ketamine", "Propofol"], ans: 1 },
+                { q: "5. การผ่าตัดคลอด (C-section) ในโค นิยมทำในท่าใดมากที่สุดหากแม่โคยังสามารถยืนได้?", opts: ["ท่านอนหงาย", "ท่านอนตะแคงซ้าย", "ท่ายืน (Standing position) พร้อมทำ Local anesthesia", "ท่านอนตะแคงขวา"], ans: 2 },
+                { q: "6. Omphalitis ในลูกโคแรกเกิด คือการอักเสบของอวัยวะใด?", opts: ["สายสะดือ", "ข้อเข่า", "ปอด", "ลำไส้"], ans: 0 },
+                { q: "7. วัสดุเย็บแผลที่เหมาะสมที่สุดในการเย็บผิวหนังบริเวณหน้าท้องโคที่มีความตึงสูงคือ?", opts: ["Catgut ขนาดเล็ก", "Polypropylene หรือ Nylon ขนาดใหญ่ (Non-absorbable)", "Vicryl", "กาวติดแผล"], ans: 1 },
+                { q: "8. การจัดการเบื้องต้นสำหรับภาวะมดลูกทะลัก (Uterine prolapse) ในโคคือข้อใด?", opts: ["ตัดมดลูกทิ้งทันที", "ทำความสะอาดและใช้น้ำตาลหรือสาร Hypertonic ประคบเพื่อลดบวมก่อนดันกลับ", "ปล่อยให้หดกลับเอง", "ฉีด Oxytocin ทันที"], ans: 1 },
+                { q: "9. ในการทำศัลยกรรมม้าในท่ายืน การใช้ยากลุ่มใดเป็นหลักในการควบคุมสัตว์?", opts: ["Alpha-2 agonists (เช่น Xylazine) ร่วมกับ Butorphanol", "Inhalant anesthetics", "Barbiturates", "Local anesthetics อย่างเดียว"], ans: 0 },
+                { q: "10. Caslick's operation ในม้าตัวเมีย ทำเพื่อจุดประสงค์ใด?", opts: ["รักษาอาการเจ็บกีบ", "ป้องกันภาวะ Pneumovagina (ลมเข้าช่องคลอด) และการติดเชื้อ", "รักษามดลูกทะลัก", "ช่วยการผสมเทียม"], ans: 1 }
+            ],
+            "การฝึกปฏิบัติทางสัตวแพทย์สาธารณสุข": [
+                { q: "1. ในการตรวจซากสุกร (Post-mortem inspection) หากพบ Cysticercus cellulosae (พยาธิตืดหมู) กระจายทั่วซาก ต้องตัดสินใจอย่างไร?", opts: ["ทำลายเฉพาะส่วนที่มีพยาธิ", "ทำลายซากทั้งตัว (Total condemnation)", "อนุญาตให้ขายได้ถ้าต้มสุก", "นำไปแช่แข็งแล้วขายต่อได้"], ans: 1 },
+                { q: "2. ค่า MRL (Maximum Residue Limit) ในทางสัตวแพทย์สาธารณสุข หมายถึงอะไร?", opts: ["ปริมาณยาสูงสุดที่ใช้รักษาสัตว์", "ปริมาณสารตกค้างสูงสุดในเนื้อสัตว์ที่ยอมรับได้และปลอดภัยต่อผู้บริโภค", "อายุขั้นต่ำของสัตว์ก่อนเข้าโรงฆ่า", "ปริมาณแบคทีเรียสูงสุดในโรงฆ่า"], ans: 1 },
+                { q: "3. กฎหมายใดเป็นหลักในการควบคุมมาตรฐานโรงฆ่าสัตว์และการจำหน่ายเนื้อสัตว์ในประเทศไทย?", opts: ["พ.ร.บ. ป้องกันการทารุณกรรมสัตว์", "พ.ร.บ. วิชาชีพสัตวแพทย์", "พ.ร.บ. ควบคุมการฆ่าสัตว์เพื่อการจำหน่ายเนื้อสัตว์", "พ.ร.บ. ยา"], ans: 2 },
+                { q: "4. การใช้สารกลุ่ม Beta-agonists (สารเร่งเนื้อแดง) ในสุกรผิดกฎหมาย เนื่องจากผลกระทบใดต่อผู้บริโภค?", opts: ["ทำให้เกิดมะเร็ง", "ทำให้เนื้อหมูเน่าเร็ว", "มีฤทธิ์กระตุ้นหัวใจ ทำให้ผู้บริโภคมีอาการใจสั่น มือสั่น", "ทำให้เกิดภาวะไตวาย"], ans: 2 },
+                { q: "5. เชื้อใดเป็นเป้าหมายสำคัญในการทำลายด้วยกระบวนการ Chilling (แช่ซากในน้ำเย็นจัด) ในโรงฆ่าไก่?", opts: ["Campylobacter และ Salmonella", "Brucella", "Mycobacterium", "Bacillus anthracis"], ans: 0 },
+                { q: "6. การตรวจต่อมน้ำเหลือง Submaxillary ในซากสุกร มีจุดประสงค์หลักเพื่อค้นหารอยโรคใด?", opts: ["พยาธิใบไม้ตับ", "โรคอหิวาต์สุกร", "วัณโรค (Tuberculosis)", "โรคปากและเท้าเปื่อย"], ans: 2 },
+                { q: "7. โรค Zoonosis ใดที่ถือเป็นข้อห้ามเด็ดขาดในการเปิดผ่าซาก (Necropsy) เพราะสปอร์จะแพร่กระจายสู่อากาศ?", opts: ["Rabies", "Anthrax (แอนแทรกซ์)", "Leptospirosis", "Brucellosis"], ans: 1 },
+                { q: "8. ข้อใดคือหลักการที่ 1 ของระบบ HACCP ในโรงงานอุตสาหกรรมอาหาร?", opts: ["การกำหนดจุดวิกฤต", "การวิเคราะห์อันตราย (Hazard Analysis)", "การกำหนดขีดจำกัดวิกฤต", "การจัดทำระบบบันทึกข้อมูล"], ans: 1 },
+                { q: "9. ในการตรวจก่อนตาย (Ante-mortem) หากพบโคมีอาการน้ำลายยืด มีตุ่มน้ำใสที่ปากและกีบ ควรทำอย่างไร?", opts: ["นำเข้าฆ่าเป็นตัวแรก", "กักแยกซากเพื่อเฝ้าระวังโรคปากและเท้าเปื่อย (FMD) และแจ้งเจ้าหน้าที่", "ฆ่าแล้วนำไปแช่แข็ง", "ปล่อยกลับฟาร์ม"], ans: 1 },
+                { q: "10. ซากสัตว์ที่มีลักษณะซีดเหลือง (Jaundice) ทั่วทั้งซากอย่างรุนแรง ควรได้รับการตัดสินอย่างไร?", opts: ["ทำลายซากทั้งตัว (Condemned)", "ขายเป็นเกรดรอง", "ตัดเฉพาะตับทิ้ง", "ล้างน้ำสะอาดแล้วผ่านได้"], ans: 0 }
+            ],
+            "คลินิกปฏิบัติเวชศาสตร์สัตว์เล็ก": [
+                { q: "1. สุนัขมาคลินิกด้วยอาการชักเกร็งต่อเนื่องไม่หยุด (Status epilepticus) ยาตัวแรกที่ควรบริหารทางหลอดเลือดดำ (IV) คือ?", opts: ["Phenobarbital", "Diazepam", "Propofol", "Levetiracetam"], ans: 1 },
+                { q: "2. การรักษาโรคพยาธิเม็ดเลือด Ehrlichia canis ในสุนัข ยาปฏิชีวนะที่เป็นยาหลัก (Drug of choice) คือข้อใด?", opts: ["Amoxicillin", "Enrofloxacin", "Doxycycline", "Metronidazole"], ans: 2 },
+                { q: "3. แมวตัวผู้มีอาการเบ่งปัสสาวะ ร้องเจ็บปวด คลำพบกระเพาะปัสสาวะตึงแข็ง (Feline Urethral Obstruction) หัตถการแรกที่ต้องทำเพื่อช่วยชีวิตคือ?", opts: ["ฉีดยาขับปัสสาวะ (Furosemide)", "ให้ยาแก้ปวด ซึม และทำการสวนท่อปัสสาวะ (Urethral catheterization)", "ผ่าตัดเปิดกระเพาะปัสสาวะทันที", "บีบกระเพาะปัสสาวะอย่างแรงให้แตก"], ans: 1 },
+                { q: "4. ในการจัดการภาวะ Diabetic Ketoacidosis (DKA) สิ่งสำคัญที่ต้องระวังและแก้ไขควบคู่ไปกับการให้อินซูลินคือภาวะใด?", opts: ["ภาวะแคลเซียมสูง", "ภาวะขาดน้ำและโพแทสเซียมต่ำ (Hypokalemia)", "ภาวะโปรตีนในเลือดสูง", "ภาวะเม็ดเลือดแดงแตก"], ans: 1 },
+                { q: "5. สุนัขแก่พันธุ์เล็กไอแห้งๆ เรื้อรัง ภาพรังสีพบหัวใจโต (VHS สูง) และมีภาวะน้ำท่วมปอด ยาที่จำเป็นต้องให้เพื่อลดน้ำท่วมปอดคือ?", opts: ["Furosemide", "Pimobendan", "Enalapril", "Doxycycline"], ans: 0 },
+                { q: "6. โรคไตเรื้อรัง (CKD) ในแมวระยะท้าย อาหารประกอบการรักษาควรปรับเปลี่ยนอย่างไร?", opts: ["เพิ่มโปรตีนและฟอสฟอรัส", "ลดโปรตีนและจำกัดฟอสฟอรัส", "เพิ่มคาร์โบไฮเดรตและเกลือ", "ให้กินอาหารเปียกทั่วไปเท่านั้น"], ans: 1 },
+                { q: "7. โรคเยื่อบุช่องท้องอักเสบติดต่อในแมว (FIP) ชนิดเปียก (Effusive form) ลักษณะของเหลวในช่องท้องมักเป็นแบบใด?", opts: ["สีแดงขุ่น มีเลือดปน", "สีใสเหมือนน้ำเปล่า โปรตีนต่ำ", "สีเหลืองใส เหนียว หนืด โปรตีนสูง (Modified transudate/Exudate)", "เป็นหนองสีขาวขุ่น"], ans: 2 },
+                { q: "8. ลูกสุนัขพันธุ์ทอย (Toy breed) มีอาการอ่อนแรง สั่น และซึมลงอย่างรวดเร็วหลังไม่ได้กินอาหารมา 8 ชั่วโมง ควรนึกถึงภาวะใด?", opts: ["Hypoglycemia (น้ำตาลในเลือดต่ำ)", "Hypocalcemia", "Parvovirus", "Distemper"], ans: 0 },
+                { q: "9. การให้เลือด (Blood transfusion) ในแมว กฎข้อสำคัญที่สุดก่อนการให้เลือดคืออะไร?", opts: ["ไม่ต้องตรวจเลือด ให้ได้เลย", "ต้องทำการตรวจกรุ๊ปเลือด (Blood typing) หรือ Crossmatching เสมอ เพราะแมวมี Natural antibodies", "ให้เฉพาะเลือดสุนัขเท่านั้น", "ให้วิตามินซีก่อนให้เลือด"], ans: 1 },
+                { q: "10. ยาลดอักเสบกลุ่ม NSAIDs (เช่น Meloxicam) ห้ามใช้ร่วมกับยากลุ่มใดเด็ดขาด เพราะจะทำให้เกิดแผลในทางเดินอาหารรุนแรง?", opts: ["Antibiotics", "Antihistamines", "Corticosteroids (เช่น Prednisolone)", "Anthelmintics"], ans: 2 }
+            ],
+            "คลินิกปฏิบัติศัลยศาสตร์สัตว์เล็ก": [
+                { q: "1. การทำหมันสุนัขและแมวเพศเมีย (Ovariohysterectomy) ในประเทศไทย นิยมเปิดผ่าบริเวณใด?", opts: ["Ventral midline (กึ่งกลางหน้าท้อง)", "Flank (สีข้าง)", "Inguinal (ขาหนีบ)", "Perineal (ฝีเย็บ)"], ans: 0 },
+                { q: "2. หัตถการ Gastropexy มักทำร่วมกับการผ่าตัดแก้ไขภาวะใดเพื่อป้องกันการกลับมาเป็นซ้ำ?", opts: ["Intussusception", "Gastric Dilatation-Volvulus (GDV - กระเพาะอาหารบิดตัว)", "Foreign body", "Megacolon"], ans: 1 },
+                { q: "3. ภาวะข้อสะโพกหลุด (Hip luxation) ในสุนัข ทิศทางของหัวกระดูก Femur ที่หลุดออกไปพบบ่อยที่สุดคือทิศทางใด?", opts: ["Craniodorsal", "Caudoventral", "Cranioventral", "Caudodorsal"], ans: 0 },
+                { q: "4. การทดสอบ Cranial drawer test ใช้ตรวจหาความผิดปกติของโครงสร้างใด?", opts: ["สะบ้า (Patella)", "ข้อสะโพก (Hip joint)", "เอ็นไขว้หน้าข้อเข่าขาด (Cranial cruciate ligament rupture)", "กระดูกหน้าแข้งหัก"], ans: 2 },
+                { q: "5. การผ่าตัดเปิดกระเพาะปัสสาวะเพื่อนำนิ่วออกเรียกว่าอะไร?", opts: ["Cystocentesis", "Cystotomy", "Urethrostomy", "Nephrectomy"], ans: 1 },
+                { q: "6. วัสดุเย็บแผลชนิดใดที่เหมาะสมที่สุดสำหรับการเย็บกระเพาะอาหารหรือลำไส้?", opts: ["Multifilament, non-absorbable (เช่น Silk)", "Monofilament, absorbable (เช่น PDS)", "Staples โลหะ", "Catgut ขนาดใหญ่"], ans: 1 },
+                { q: "7. ในการผ่าตัดคลอด (C-section) สุนัข ควรลงมีดผ่าเปิดมดลูกบริเวณใด?", opts: ["บริเวณที่รกลอกตัว", "บริเวณปากมดลูก (Cervix)", "ตัวมดลูก (Uterine body) บริเวณที่ไม่มีรกเกาะ", "รังไข่"], ans: 2 },
+                { q: "8. การรักษาทางศัลยกรรมสำหรับภาวะลำไส้กลืนกัน (Intussusception) ที่ลำไส้ส่วนนั้นเน่าตายแล้วคือ?", opts: ["ดันลำไส้กลับแล้วเย็บปิด", "Intestinal resection and anastomosis (ตัดต่อลำไส้)", "ให้ยากินย่อยลำไส้", "ปล่อยไว้เดี๋ยวหายเอง"], ans: 1 },
+                { q: "9. เมื่อพบสุนัขกระดูกหักแบบเปิด (Open fracture) จากอุบัติเหตุมาถึงคลินิก สิ่งแรกที่ควรทำทางศัลยกรรมคือ?", opts: ["ผ่าตัดใส่เหล็กดามทันที", "ทำความสะอาดแผล (Debridement) ล้างด้วยน้ำเกลือปริมาณมาก พันแผลชั่วคราว และให้ยาปฏิชีวนะ", "ตัดขาทิ้งทันที", "ใส่เฝือกแข็งทับแผล"], ans: 1 },
+                { q: "10. การบล็อกหลังด้วยยาชา (Epidural anesthesia) ในสุนัข ตำแหน่งที่เหมาะสมในการแทงเข็มคือบริเวณใด?", opts: ["T12-T13", "L1-L2", "Lumbosacral space (L7-S1)", "Coccygeal space"], ans: 2 }
+            ],
+            "คลินิกปฏิบัติม้า": [
+                { q: "1. ม้ามีอาการปวดเสียดท้อง (Colic) หัตถการแรกที่สัตวแพทย์มักทำเพื่อลดความดันในกระเพาะอาหารและป้องกันกระเพาะแตกคือ?", opts: ["ผ่าตัดทันที", "สวนท่อทางจมูกลงกระเพาะอาหาร (Nasogastric intubation)", "ให้ยาระบายทาง 항문", "เจาะเลือด"], ans: 1 },
+                { q: "2. ข้อใดคืออุปกรณ์สำคัญที่ใช้ทดสอบเพื่อหาตำแหน่งอาการเจ็บกีบ (Lameness) ในม้าว่ามาจากส่วนใดของเท้า?", opts: ["Stethoscope", "Hoof tester (คีมบีบกีบ)", "Thermometer", "Endoscope"], ans: 1 },
+                { q: "3. โรคบาดทะยัก (Tetanus) ในม้า มีอาการทางคลินิกที่เด่นชัดคือข้อใด?", opts: ["ท้องเสียอย่างรุนแรง", "กล้ามเนื้อเกร็งแข็ง หนังตาที่สามยื่นออกมา (Prolapsed third eyelid) และไวต่อสิ่งเร้า", "ไอและมีน้ำมูก", "ฉี่เป็นเลือด"], ans: 1 },
+                { q: "4. กลุ่มพยาธิทางเดินอาหารใดที่พบว่าเป็นสาเหตุสำคัญที่ทำให้ม้าเกิดอาการ Colic บ่อยที่สุด?", opts: ["Tapeworms", "Ascarids", "Strongyles (Large and Small strongyles)", "Pinworms"], ans: 2 },
+                { q: "5. Coggins test เป็นการทดสอบทางห้องปฏิบัติการเพื่อวินิจฉัยโรคติดเชื้อไวรัสใดในม้า?", opts: ["Equine Influenza", "Equine Infectious Anemia (EIA - โรคโลหิตจางติดต่อ)", "African Horse Sickness", "Rabies"], ans: 1 },
+                { q: "6. ม้าที่มีภาวะ Laminitis (เจ็บกีบ) แบบเฉียบพลัน มักมีท่าทางการยืนแบบใด?", opts: ["ยืนขาเดียว", "เหยียดขาหน้าไปข้างหน้า เพื่อถ่ายน้ำหนักไปที่ส้นกีบและขาหลัง", "เดินวนเป็นวงกลม", "นอนหงาย"], ans: 1 },
+                { q: "7. อัตราการเต้นของหัวใจ (Heart rate) ปกติของม้าโตเต็มวัยขณะพักคือเท่าใด?", opts: ["10-20 ครั้งต่อนาที", "28-44 ครั้งต่อนาที", "60-80 ครั้งต่อนาที", "100-120 ครั้งต่อนาที"], ans: 1 },
+                { q: "8. วัคซีนพื้นฐาน (Core vaccines) ที่แนะนำให้ฉีดในม้าทุกตัวเป็นประจำปีคือข้อใด?", opts: ["Tetanus, Equine Encephalomyelitis, Rabies", "FMD", "Parvovirus", "Distemper"], ans: 0 },
+                { q: "9. หากม้าเกิดอุบัติเหตุมีแผลบาดลึกที่ขาและมีเลือดออกมาก การปฐมพยาบาลเบื้องต้นที่ดีที่สุดคือ?", opts: ["ราดแอลกอฮอล์", "ฉีดยาชา", "ใช้ผ้าพันกดทับบาดแผลอย่างแน่นหนา (Pressure bandage)", "ทายาสีฟัน"], ans: 2 },
+                { q: "10. ยาปฏิชีวนะชนิดใดห้ามฉีดเข้าหลอดเลือดดำ (IV) ในม้าโดยเด็ดขาด เพราะจะทำให้ม้าชักและเสียชีวิตได้ทันที?", opts: ["Gentamicin", "Enrofloxacin", "Procaine Penicillin G", "Ceftiofur"], ans: 2 }
+            ],
+            "คลินิกปฏิบัติสัตว์ปีก": [
+                { q: "1. โรคนิวคาสเซิล (Newcastle Disease) ในไก่ ก่อให้เกิดอาการรุนแรงในระบบใดบ้าง?", opts: ["ระบบสืบพันธุ์อย่างเดียว", "ระบบหายใจ, ระบบประสาท (คอบิด) และระบบทางเดินอาหาร (ขี้เขียว)", "ระบบกระดูกและกล้ามเนื้อ", "ระบบผิวหนัง"], ans: 1 },
+                { q: "2. โรคหลอดลมอักเสบติดต่อ (Infectious Bronchitis: IB) ในไก่ไข่ ส่งผลกระทบอย่างไรต่อผลผลิต?", opts: ["ไข่แฝด", "ไข่รูปร่างผิดปกติ เปลือกไข่บาง/ขรุขระ และไข่ขาวเหลวเป็นน้ำ", "ไข่มีขนาดใหญ่ขึ้น", "ไข่แดงมีสองสี"], ans: 1 },
+                { q: "3. วิธีการให้วัคซีนป้องกันโรคฝีดาษไก่ (Fowl Pox) ที่มีประสิทธิภาพที่สุดคือวิธีใด?", opts: ["ผสมน้ำดื่ม", "ฉีดเข้ากล้ามเนื้อ", "แทงพังผืดปีก (Wing web puncture)", "หยอดตา"], ans: 2 },
+                { q: "4. ยาต้านจุลชีพกลุ่มใดห้ามใช้โดยเด็ดขาดในไก่ไข่ที่กำลังให้ผลผลิตเพื่อการบริโภค เนื่องจากอาจเกิดสารตกค้าง?", opts: ["Fluoroquinolones (เช่น Enrofloxacin)", "Amoxicillin", "Tetracycline", "Macrolides"], ans: 0 },
+                { q: "5. ไก่เนื้อสุขภาพดีและเจริญเติบโตเร็ว จู่ๆ นอนหงายกระพือปีกและตายเฉียบพลัน อาจเป็นกลุ่มอาการใด?", opts: ["Avian Influenza", "Fowl Cholera", "Sudden Death Syndrome (SDS)", "Marek's disease"], ans: 2 },
+                { q: "6. โรคบิด (Coccidiosis) ในไก่ที่ทำให้ถ่ายเป็นเลือด เกิดจากการติดเชื้อโปรโตซัวสกุลใด?", opts: ["Plasmodium", "Eimeria", "Leucocytozoon", "Histomonas"], ans: 1 },
+                { q: "7. การทำวัคซีนป้องกันโรคมาเร็กซ์ (Marek's Disease) นิยมทำในช่วงใดของชีวิตไก่?", opts: ["ไก่สาวก่อนไข่", "ฉีดในไข่ฟักวันที่ 18 หรือลูกไก่อายุ 1 วัน ที่โรงฟัก", "ไก่อายุ 1 เดือน", "ไก่เนื้อก่อนจับขาย"], ans: 1 },
+                { q: "8. รอยโรค 'จุดเนื้อตายสีขาวรูปดอกจัน (Star-shaped necrosis)' ที่ตับ เป็นลักษณะเด่นของโรคใดในสัตว์ปีก?", opts: ["Fowl Cholera (อหิวาต์ไก่)", "Avian Pox", "Infectious Bursal Disease", "Infectious Coryza"], ans: 0 },
+                { q: "9. ไก่มีอาการหน้าบวม ตาบวม มีน้ำมูกเหนียว และมีกลิ่นเหม็นคาวจัด เป็นลักษณะอาการของโรคใด?", opts: ["Infectious Coryza (หวัดหน้าบวม)", "Newcastle disease", "Fowl typhoid", "Aspergillosis"], ans: 0 },
+                { q: "10. ระบบ Biosecurity (ความปลอดภัยทางชีวภาพ) ที่สำคัญที่สุดเพื่อป้องกันการนำโรคเข้าสู่ฟาร์มไก่คือ?", opts: ["การให้ยาปฏิชีวนะผสมอาหารตลอดเวลา", "การควบคุมการเข้า-ออกของบุคลากร ยานพาหนะ และป้องกันสัตว์พาหะ", "การเพิ่มอุณหภูมิในโรงเรือน", "การเปลี่ยนยี่ห้ออาหารบ่อยๆ"], ans: 1 }
+            ],
+            "คลินิกปฏิบัติสัตว์น้ํา": [
+                { q: "1. ปรสิตภายนอกที่เป็นสาเหตุของ 'โรคจุดขาว' (White Spot Disease) ในปลาน้ำจืดคือเชื้อใด?", opts: ["Dactylogyrus", "Gyrodactylus", "Ichthyophthirius multifiliis (Ich)", "Argulus"], ans: 2 },
+                { q: "2. คุณภาพน้ำพารามิเตอร์ใดที่มีความเป็นพิษต่อปลามากที่สุด และมักเกิดจากการสะสมของของเสียในบ่อ?", opts: ["Dissolved Oxygen", "pH", "แอมโมเนียที่ไม่แตกตัว (Unionized ammonia - NH3)", "ไนเตรต (Nitrate)"], ans: 2 },
+                { q: "3. โรคติดเชื้อ Streptococcus spp. ในปลานิล มักแสดงอาการทางคลินิกอย่างไร?", opts: ["ตาโปน (Exophthalmia), ว่ายน้ำควงสว่านผิดปกติ, และมีเลือดออกตามผิวหนัง", "ครีบเปื่อยและหางเปื่อย", "เหงือกซีดขาว", "ลำตัวมีจุดสีดำ"], ans: 0 },
+                { q: "4. เมื่อเกษตรกรแจ้งว่าปลาในบ่อเริ่มทยอยตาย สิ่งแรกที่สัตวแพทย์ควรลงมือทำเพื่อการวินิจฉัยคือ?", opts: ["จ่ายยาปฏิชีวนะทันที", "ตรวจวัดคุณภาพน้ำ (Water quality analysis)", "จับปลาทั้งหมดมาฉีดวัคซีน", "ใส่เกลือปริมาณมาก"], ans: 1 },
+                { q: "5. สารเคมีใดที่สัตวแพทย์นิยมใช้ในการวางยาสลบปลาเพื่อทำศัลยกรรมหรือขูดตรวจผิวหนัง?", opts: ["Propofol", "MS-222 (Tricaine methanesulfonate) หรือน้ำมันกานพลู", "Ketamine", "Isoflurane"], ans: 1 },
+                { q: "6. ปรสิตปลิงใส (Monogenea) ชนิดใดที่มักพบเกาะทำลายบริเวณ 'เหงือก' ปลา?", opts: ["Gyrodactylus", "Dactylogyrus", "Trichodina", "Lernea"], ans: 1 },
+                { q: "7. กลุ่มอาการตายด่วน (EMS/AHPND) ในกุ้งขาวแวนนาไม มีสาเหตุจากการติดเชื้อแบคทีเรียชนิดใด?", opts: ["Vibrio cholerae", "Vibrio parahaemolyticus (สายพันธุ์ที่มีพลาสมิดสร้างสารพิษ)", "Aeromonas hydrophila", "Streptococcus iniae"], ans: 1 },
+                { q: "8. โรคไวรัสใดที่ทำให้เกิดการตายอย่างรุนแรงและมีจุดขาวตามเปลือกและกระดองของกุ้ง?", opts: ["Taura Syndrome Virus", "Yellow Head Virus", "White Spot Syndrome Virus (WSSV)", "IHN Virus"], ans: 2 },
+                { q: "9. วิธีการบริหารยาปฏิชีวนะให้ปลาในฟาร์มเลี้ยงขนาดใหญ่ที่มีประสิทธิภาพและปฏิบัติได้จริงที่สุดคือ?", opts: ["การฉีดยาปลาทีละตัว", "การผสมยาในอาหาร (Medicated feed)", "การสาดละลายยาลงไปในบ่อ", "การพ่นยาเหนือน้ำ"], ans: 1 },
+                { q: "10. ปลาน้ำจืดที่มีแผลหลุมลึก (Ulcer) ทั่วลำตัว มักสัมพันธ์กับการติดเชื้อแบคทีเรียฉวยโอกาสชนิดใด?", opts: ["Aeromonas hydrophila", "Mycobacterium spp.", "Vibrio vulnificus", "Staphylococcus aureus"], ans: 0 }
+            ],
+            "คลินิกปฏิบัติสัตว์เคี้ยวเอื้อง": [
+                { q: "1. โคนมเพิ่งคลอดลูกได้ 1 วัน มีอาการอ่อนแรง ลุกไม่ขึ้น คอพับไปด้านข้าง (S-shape curve) ผลเลือดพบแคลเซียมต่ำ ควรให้การรักษาอย่างไร?", opts: ["ฉีดกลูโคสเข้าเส้นเลือดดำ", "ฉีด Calcium borogluconate เข้าหลอดเลือดดำอย่างช้าๆ", "ให้ยาปฏิชีวนะ", "ผ่าตัดกระเพาะ"], ans: 1 },
+                { q: "2. ภาวะกระเพาะแท้เคลื่อน (Displaced Abomasum) ชนิดใดที่มีความรุนแรงและเป็นภาวะฉุกเฉินทางศัลยกรรมมากที่สุด?", opts: ["Left Displaced Abomasum (LDA)", "Right Displaced Abomasum (RDA) ร่วมกับภาวะบิดตัว (Volvulus)", "Rumen impaction", "Reticulitis"], ans: 1 },
+                { q: "3. การตรวจน้ำนมด้วย California Mastitis Test (CMT) หากเกิดลักษณะเป็นวุ้นหนืด (Gel) บ่งชี้ว่าน้ำนมมีสิ่งใดปริมาณสูง?", opts: ["ไขมัน (Fat)", "เซลล์เม็ดเลือดขาว (Somatic cells) แสดงถึงเต้านมอักเสบ", "โปรตีน (Protein)", "น้ำตาลแลคโตส"], ans: 1 },
+                { q: "4. พยาธิใบไม้ตับ (Fasciola gigantica) ในโค กระบือ อาศัยสัตว์ชนิดใดเป็นโฮสต์กึ่งกลาง (Intermediate host)?", opts: ["ยุง", "เห็บ", "หอยน้ำจืด (Lymnaea spp.)", "ปูนา"], ans: 2 },
+                { q: "5. ภาวะท้องอืดชนิดมีฟอง (Frothy bloat) ในโค มักเกิดจากสาเหตุใด?", opts: ["กินพืชตระกูลถั่ว (Legumes) อ่อนๆ ปริมาณมาก", "กินฟางแห้งมากเกินไป", "ติดเชื้อแบคทีเรีย", "ไม่ได้กินน้ำ"], ans: 0 },
+                { q: "6. เมื่อต้องช่วยทำคลอดแม่โคที่ลูกโคอยู่ในท่าเอาขาหลังและก้นออก (Breech presentation) สัตวแพทย์ควรจัดการอย่างไร?", opts: ["ดึงออกมาเลยทันที", "ฉีดฮอร์โมนให้คลอดเอง", "พยายามดันลูกโคกลับไปเพื่อจัดท่าใหม่ หรือพิจารณาผ่าตัดคลอด", "รออีก 3 วัน"], ans: 2 },
+                { q: "7. โรคปากและเท้าเปื่อย (FMD) ในสัตว์เคี้ยวเอื้อง มีลักษณะรอยโรคที่สำคัญคือข้อใด?", opts: ["ตุ่มพองหรือแผลหลุมบริเวณเยื่อบุช่องปาก ลิ้น และง่ามกีบ", "ขนร่วงเป็นหย่อม", "เลือดออกทางทวารหนัก", "ตาบอด"], ans: 0 },
+                { q: "8. กลยุทธ์ในการป้องกันโรคไข้นม (Milk fever) ในโคนมช่วงก่อนคลอด (Dry period) คือการจัดการโภชนาการแบบใด?", opts: ["ให้อาหารเสริมแคลเซียมปริมาณสูงมาก", "ให้อาหารที่มีแคลเซียมต่ำ เพื่อกระตุ้นระบบการดึงแคลเซียมจากกระดูก (PTH)", "งดให้อาหาร", "ให้กินแต่ฟางข้าว"], ans: 1 },
+                { q: "9. โรคแท้งติดต่อ (Brucellosis) ในโค มักทำให้แม่โคเกิดการแท้งในช่วงใดของการตั้งท้อง?", opts: ["เดือนแรกของการตั้งท้อง", "ไตรมาสที่สอง", "ช่วงไตรมาสสุดท้าย (ช่วงท้ายของการตั้งท้อง)", "ไม่ทำให้แท้ง"], ans: 2 },
+                { q: "10. โคและแพะที่มีอาการซีดมาก คอบวมน้ำ (Bottle jaw) และท้องเสีย มักเกิดจากการระบาดของพยาธิตัวกลมชนิดใดในกระเพาะแท้?", opts: ["Haemonchus contortus", "Toxocara vitulorum", "Moniezia spp.", "Fasciola spp."], ans: 0 }
+            ],
+            "คลินิกปฏิบัติสุกร": [
+                { q: "1. โรคท้องร่วงติดต่อในสุกร (PED) หรือ TGE ในลูกสุกรแรกเกิด มีสาเหตุมาจากเชื้อกลุ่มใด?", opts: ["แบคทีเรีย E. coli", "ไวรัส Coronavirus", "ไวรัส Parvovirus", "โปรโตซัว"], ans: 1 },
+                { q: "2. เชื้อไวรัส PRRS (Porcine Reproductive and Respiratory Syndrome) ทำให้เกิดความเสียหายหลักในฝูงแม่พันธุ์อย่างไร?", opts: ["เต้านมอักเสบ", "แท้งลูกในช่วงท้ายของการตั้งท้อง มีลูกตายแรกคลอด และมัมมี่", "เป็นหมันถาวร", "ขาหัก"], ans: 1 },
+                { q: "3. โรคปอดและเยื่อหุ้มปอดอักเสบติดต่อในสุกร (APP) ที่ทำให้สุกรขุนตายเฉียบพลันและมีเลือดออกทางจมูก เกิดจากแบคทีเรียใด?", opts: ["Actinobacillus pleuropneumoniae", "Mycoplasma hyopneumoniae", "Streptococcus suis", "Pasteurella multocida"], ans: 0 },
+                { q: "4. การจัดการพื้นฐานที่ต้องทำให้ลูกสุกรภายในอายุ 3 วันแรก เพื่อป้องกันภาวะโลหิตจางคือ?", opts: ["การตัดหาง", "การฉีดธาตุเหล็ก (Iron dextran)", "การฉีดวัคซีน FMD", "การตอน"], ans: 1 },
+                { q: "5. โรคลำไส้อักเสบเน่าตาย (Necrotic enteritis) ในลูกสุกรดูดนม ที่ถ่ายเป็นเลือด มักเกิดจากเชื้อแบคทีเรียใด?", opts: ["Clostridium perfringens type C", "Salmonella choleraesuis", "Escherichia coli", "Lawsonia intracellularis"], ans: 0 },
+                { q: "6. ลักษณะรอยโรคทางพยาธิวิทยา 'จุดเลือดออกที่ไตคล้ายไข่งวงช้าง (Turkey egg kidney)' เป็นลักษณะสำคัญของโรคใด?", opts: ["โรคอหิวาต์แอฟริกาในสุกร (ASF) หรืออหิวาต์สุกร (CSF)", "โรคปากและเท้าเปื่อย (FMD)", "โรคพิษสุนัขบ้าเทียม (PRV)", "โรคเซิร์คโคไวรัส (PCV2)"], ans: 0 },
+                { q: "7. อาการไอพร้อมกันทั้งเล้า ไข้สูง และเบื่ออาหารเฉียบพลัน แล้วฟื้นตัวพร้อมกันในเวลาไม่กี่วัน เป็นลักษณะของโรคใด?", opts: ["Swine Influenza (ไข้หวัดใหญ่สุกร)", "PRRS", "APP", "Mycoplasma"], ans: 0 },
+                { q: "8. การติดเชื้อ Streptococcus suis ในลูกสุกรอนุบาล ที่ทำให้เกิดเยื่อหุ้มสมองอักเสบและข้อบวม มักมีช่องทางการติดเชื้อหลักมาจากไหน?", opts: ["ผ่านทางสายสะดือ หรือบาดแผลจากการตัดเขี้ยว/ตัดหางที่ไม่สะอาด", "ผ่านการสูดดม", "ผ่านการผสมพันธุ์", "ผ่านแมลงวัน"], ans: 0 },
+                { q: "9. โรคบวมน้ำ (Edema disease) ในสุกรหย่านม ที่ทำให้หนังตาบวม เสียงร้องแหบ และตายเฉียบพลัน เกิดจากสารพิษ (Shiga-like toxin) ของเชื้อใด?", opts: ["Escherichia coli", "Salmonella typhimurium", "Brachyspira hyodysenteriae", "Clostridium tetani"], ans: 0 },
+                { q: "10. กลุ่มอาการ PMWS (Postweaning Multisystemic Wasting Syndrome) ที่สุกรแคระแกร็น ผอมแห้ง ต่อมน้ำเหลืองโต เกิดจากไวรัสชนิดใด?", opts: ["Porcine Circovirus type 2 (PCV2)", "Porcine Epidemic Diarrhea Virus (PEDv)", "Swine fever virus", "Rotavirus"], ans: 0 }
+            ]
+        }
+        // *หมายเหตุ: สำหรับปี 2-6 ในระบบจริง โครงสร้างจะใช้ Object แบบเดียวกันนี้ในการดึงข้อสอบอัตโนมัติ
+    };
+
+    let currentYearStr = "";
+    
+    function startExam() {
+        const name = document.getElementById('studentName').value;
+        const year = document.getElementById('studyYear').value;
+
+        if (!name || !year) {
+            alert("กรุณากรอกชื่อและเลือกชั้นปีให้ครบถ้วน");
+            return;
+        }
+
+        currentYearStr = document.getElementById('studyYear').options[document.getElementById('studyYear').selectedIndex].text;
+        
+        document.getElementById('loginArea').style.display = 'none';
+        document.getElementById('examArea').style.display = 'block';
+
+        renderQuestions(year);
+    }
+
+    function renderQuestions(yearKey) {
+        const examForm = document.getElementById('examForm');
+        examForm.innerHTML = ''; 
+
+        // ตรวจสอบว่ามีข้อมูลปีนี้หรือไม่ (ตัวอย่างนี้มี year1 สมบูรณ์)
+        const subjects = examData[yearKey];
+        
+        if (!subjects) {
+            examForm.innerHTML = `<h3 style="color:red; text-align:center;">กำลังปรับปรุงฐานข้อมูลข้อสอบสำหรับชั้นปีนี้... กรุณาทดสอบด้วย "ปี 1 เทอม 1"</h3>`;
+            return;
+        }
+
+        for (const [subjectName, questions] of Object.entries(subjects)) {
+            const subjectDiv = document.createElement('div');
+            subjectDiv.className = 'subject-container';
+            
+            const title = document.createElement('div');
+            title.className = 'subject-title';
+            title.innerText = `วิชา: ${subjectName}`;
+            subjectDiv.appendChild(title);
+
+            questions.forEach((item, index) => {
+                const qBlock = document.createElement('div');
+                qBlock.className = 'question-block';
+                
+                const qText = document.createElement('div');
+                qText.className = 'question-text';
+                qText.innerText = item.q;
+                qBlock.appendChild(qText);
+
+                const optionsDiv = document.createElement('div');
+                optionsDiv.className = 'options';
+
+                item.opts.forEach((opt, optIndex) => {
+                    const label = document.createElement('label');
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    // บังคับทำทุกข้อ
+                    radio.required = true;
+                    radio.name = `ans_${subjectName}_${index}`;
+                    radio.value = optIndex;
+
+                    label.appendChild(radio);
+                    label.appendChild(document.createTextNode(opt));
+                    optionsDiv.appendChild(label);
+                });
+
+                qBlock.appendChild(optionsDiv);
+                subjectDiv.appendChild(qBlock);
+            });
+
+            examForm.appendChild(subjectDiv);
+        }
+    }
+
+    function calculateGrade(score) {
+        if (score >= 9) return { letter: 'A', point: 4.0 };
+        if (score >= 8) return { letter: 'B+', point: 3.5 };
+        if (score >= 7) return { letter: 'B', point: 3.0 };
+        if (score >= 6) return { letter: 'C+', point: 2.5 };
+        if (score >= 5) return { letter: 'C', point: 2.0 };
+        if (score >= 4) return { letter: 'D+', point: 1.5 };
+        if (score >= 3) return { letter: 'D', point: 1.0 };
+        return { letter: 'F', point: 0.0 };
+    }
+
+    function submitExam() {
+        const examForm = document.getElementById('examForm');
+        if (!examForm.checkValidity()) {
+            alert("กรุณาทำข้อสอบให้ครบทุกข้อ (ห้ามขาด) ระบบถึงจะประมวลผลได้");
+            return;
+        }
+
+        const name = document.getElementById('studentName').value;
+        const yearKey = document.getElementById('studyYear').value;
+        const subjects = examData[yearKey];
+
+        if (!subjects) return;
+
+        let totalPoints = 0;
+        let subjectCount = 0;
+        let resultsForDB = {};
+
+        const tbody = document.getElementById('gradeBody');
+        tbody.innerHTML = '';
+
+        for (const [subjectName, questions] of Object.entries(subjects)) {
+            let score = 0;
+            questions.forEach((item, index) => {
+                const selected = document.querySelector(`input[name="ans_${subjectName}_${index}"]:checked`);
+                if (selected && parseInt(selected.value) === item.ans) {
+                    score++;
+                }
+            });
+
+            const grade = calculateGrade(score);
+            totalPoints += grade.point;
+            subjectCount++;
+
+            resultsForDB[subjectName] = { score: score, grade: grade.letter };
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${subjectName}</td>
+                <td>${score} / 10</td>
+                <td><strong>${grade.letter}</strong></td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        const gpa = (totalPoints / subjectCount).toFixed(2);
+        
+        document.getElementById('resName').innerText = name;
+        document.getElementById('resYear').innerText = currentYearStr;
+        document.getElementById('finalGPA').innerText = gpa;
+
+        document.getElementById('examArea').style.display = 'none';
+        document.getElementById('resultArea').style.display = 'block';
+
+        // บันทึกลง Firebase Firestore
+        db.collection("examResults").add({
+            studentName: name,
+            academicYear: "2569",
+            studyYear: currentYearStr,
+            gpa: gpa,
+            details: resultsForDB,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            console.log("บันทึกข้อมูลนักศึกษาลงฐานข้อมูลสำเร็จ!");
+        }).catch((error) => {
+            console.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล: ", error);
+        });
+    }
+</script>
+
+</body>
+</html>
